@@ -127,15 +127,15 @@ export class FeatureSplitter {
    */
   processBatch(features: any[]): any[] {
     return features.map(feature => {
-      // Create a copy to avoid mutating input
-      const processedFeature = { ...feature };
+      // Create a deep copy to avoid mutating input
+      const processedFeature = JSON.parse(JSON.stringify(feature));
       
       // Apply coordinate precision reduction
-      if (feature.geometry && feature.geometry.coordinates) {
-        if (feature.geometry.type === 'Polygon') {
-          processedFeature.geometry.coordinates = CoordinateProcessor.reducePolygonPrecision(feature.geometry.coordinates);
-        } else if (feature.geometry.type === 'MultiPolygon') {
-          processedFeature.geometry.coordinates = CoordinateProcessor.reduceMultiPolygonPrecision(feature.geometry.coordinates);
+      if (processedFeature.geometry && processedFeature.geometry.coordinates) {
+        if (processedFeature.geometry.type === 'Polygon') {
+          processedFeature.geometry.coordinates = CoordinateProcessor.reducePolygonPrecision(processedFeature.geometry.coordinates);
+        } else if (processedFeature.geometry.type === 'MultiPolygon') {
+          processedFeature.geometry.coordinates = CoordinateProcessor.reduceMultiPolygonPrecision(processedFeature.geometry.coordinates);
         }
       }
       
