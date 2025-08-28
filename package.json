@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "start": "node dist/run-splitter.js",
+    "split": "npm run build && npm start",
+    "dev": "ts-node src/run-splitter.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },
