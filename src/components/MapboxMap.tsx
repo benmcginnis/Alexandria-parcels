@@ -101,10 +101,8 @@ const MapboxMap: React.FC = () => {
             const feature = e.features[0];
             const properties = feature.properties || {};
 
-            // Calculate area in different units
-            const areaSqUnits = properties.area || 0;
-            const areaAcres = areaSqUnits * 0.000247105 || 0; // Convert to acres
-            const areaSqFeet = areaSqUnits * 10.7639 || 0; // Convert to square feet
+            // Get area measurements
+            const areaSqUnits = properties.SHAPE__Area || 0;
 
             // Format coordinates
             const geometry = feature.geometry as { coordinates: number[][][] };
@@ -127,13 +125,13 @@ const MapboxMap: React.FC = () => {
             new mapboxgl.Popup({
               closeButton: true,
               closeOnClick: false,
-              maxWidth: '400px',
+              maxWidth: '500px',
               className: 'parcel-popup',
             })
               .setLngLat(e.lngLat)
               .setHTML(
                 `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px;">
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 12px;">
                 <div style="border-bottom: 2px solid #3b82f6; margin-bottom: 16px; padding-bottom: 8px;">
                   <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 18px; font-weight: 600;">
                     🏠 Alexandria Parcel
@@ -143,12 +141,32 @@ const MapboxMap: React.FC = () => {
                 <div style="margin-bottom: 16px;">
                   <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span style="font-weight: 600; color: #374151;">Parcel ID:</span>
-                    <span style="color: #6b7280; font-family: 'SF Mono', Monaco, monospace;">${properties.id || 'N/A'}</span>
+                    <span style="color: #6b7280; font-family: 'SF Mono', Monaco, monospace;">${properties.PID_RE || 'N/A'}</span>
                   </div>
                   
                   <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #374151;">Batch:</span>
-                    <span style="color: #6b7280;">${properties.batch || 'N/A'}</span>
+                    <span style="font-weight: 600; color: #374151;">Address:</span>
+                    <span style="color: #6b7280; text-align: right; max-width: 250px;">${properties.ADDRESS_GIS || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Owner:</span>
+                    <span style="color: #6b7280; text-align: right; max-width: 250px;">${properties.OWN_NAME || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Property Name:</span>
+                    <span style="color: #6b7280; text-align: right; max-width: 250px;">${properties.PRP_NAME || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Zoning:</span>
+                    <span style="color: #6b7280;">${properties.ZONING || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Land Type:</span>
+                    <span style="color: #6b7280; text-align: right; max-width: 250px;">${properties.LANDDESC || 'N/A'}</span>
                   </div>
                   
                   <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -165,21 +183,15 @@ const MapboxMap: React.FC = () => {
                   </h4>
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
                     <div>
-                      <span style="color: #6b7280;">Acres:</span>
+                      <span style="color: #6b7280;">Official Assessment:</span>
                       <span style="font-weight: 600; color: #374151; margin-left: 4px;">
-                        ${areaAcres.toFixed(3)}
+                        ${properties.LAND_SF ? properties.LAND_SF.toLocaleString() : 'N/A'} sq ft
                       </span>
                     </div>
                     <div>
-                      <span style="color: #6b7280;">Sq Feet:</span>
+                      <span style="color: #6b7280;">Calculated Area:</span>
                       <span style="font-weight: 600; color: #374151; margin-left: 4px;">
-                        ${areaSqFeet.toFixed(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span style="color: #6b7280;">Sq Units:</span>
-                      <span style="font-weight: 600; color: #374151; margin-left: 4px;">
-                        ${areaSqUnits.toFixed(2)}
+                        ${areaSqUnits.toFixed(2)} sq units
                       </span>
                     </div>
                   </div>
