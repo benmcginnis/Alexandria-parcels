@@ -1,4 +1,3 @@
-import React from 'react'
 import MapboxMap from './components/MapboxMap'
 import './App.css'
 

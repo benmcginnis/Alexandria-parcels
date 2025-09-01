@@ -9,7 +9,7 @@ const ALEXANDRIA_BOUNDS: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [
 ]
 
 const MapboxMap: React.FC = () => {
-  const [map, setMap] = useState<mapboxgl.Map | null>(null)
+  const [, setMap] = useState<mapboxgl.Map | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
