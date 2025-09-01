@@ -3,8 +3,10 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 24.x (use `nvm use 24` if you have nvm installed)
+- Node.js 24.x (automatically managed by nvm)
 - Mapbox access token
+
+**Note**: This project uses `.nvmrc` to automatically manage Node versions. When you `cd` into this directory, nvm will automatically switch to Node 24.
 
 ### 1. Environment Setup
 Copy the environment template and add your Mapbox access token:
@@ -13,7 +15,20 @@ cp env.example .env
 # Edit .env and add your Mapbox access token
 ```
 
-### 2. Install Dependencies
+### 2. Node Version Management
+```bash
+# nvm will automatically use Node 24 when you cd into this directory
+cd /path/to/this/project
+nvm use  # This will automatically switch to Node 24
+
+# Or manually switch if needed
+nvm use 24
+
+# Verify the correct version
+npm run node:check
+```
+
+### 3. Install Dependencies
 ```bash
 npm install
 ```
@@ -94,8 +109,14 @@ The app is ready to load the optimized Alexandria parcels data:
 - Change port in `vite.config.ts` or kill process using port 3000
 
 ### TypeScript Errors
-- Ensure Node 24 is active: `nvm use 24`
+- Ensure Node 24 is active: `nvm use` (automatically switches to Node 24)
 - Run `npm install` to ensure all dependencies are installed
+
+### Node Version Issues
+- **Automatic switching**: `cd` into the project directory and run `nvm use`
+- **Manual switching**: `nvm use 24`
+- **Verify version**: `npm run node:check`
+- **Install Node 24**: `npm run node:install` (if not already installed)
 
 ## 📚 Resources
 

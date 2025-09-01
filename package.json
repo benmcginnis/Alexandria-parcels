@@ -20,7 +20,10 @@
     "type-check": "tsc --noEmit",
     "quality-check": "./scripts/quality-check.sh",
     "pre-commit": "npm run quality-check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "node:use": "nvm use",
+    "node:install": "nvm install",
+    "node:check": "node --version && echo 'Expected: v24.x.x'"
   },
   "dependencies": {
     "@types/react": "^19.1.12",
