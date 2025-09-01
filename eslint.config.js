@@ -22,6 +22,14 @@ export default [
         console: 'readonly',
         document: 'readonly',
         window: 'readonly',
+        fetch: 'readonly',
+        TextDecoder: 'readonly',
+        TextEncoder: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        Response: 'readonly',
       },
     },
     plugins: {
@@ -47,6 +55,23 @@ export default [
     settings: {
       react: {
         version: 'detect',
+      },
+    },
+  },
+  {
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        test: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
+        global: 'readonly',
       },
     },
   },

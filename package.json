@@ -2,6 +2,7 @@
   "name": "alexandria-parcels-map-viewer",
   "version": "1.0.0",
   "description": "Alexandria Parcels Map Viewer with React 19 + Mapbox",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p scripts/splitter/tsconfig.json",
