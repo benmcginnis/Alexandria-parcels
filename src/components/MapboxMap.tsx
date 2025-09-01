@@ -22,6 +22,7 @@ const MapboxMap: React.FC = () => {
     errors: [] as string[],
   });
   const [geoJsonLoader] = useState(() => new GeoJsonLoader());
+  const [currentPopup, setCurrentPopup] = useState<mapboxgl.Popup | null>(null);
 
   // Function to load GeoJSON data and add to map
   const loadParcelData = useCallback(
@@ -122,7 +123,14 @@ const MapboxMap: React.FC = () => {
                   ) / coordinates.length
                 : 0;
 
-            new mapboxgl.Popup({
+            // Close any existing popup
+            if (currentPopup) {
+              currentPopup.remove();
+              setCurrentPopup(null);
+            }
+
+            // Create new popup
+            const newPopup = new mapboxgl.Popup({
               closeButton: true,
               closeOnClick: false,
               maxWidth: '500px',
@@ -202,8 +210,16 @@ const MapboxMap: React.FC = () => {
                 </div>
               </div>
             `
-              )
-              .addTo(mapInstance);
+              );
+
+            // Add popup to map and store reference
+            newPopup.addTo(mapInstance);
+            setCurrentPopup(newPopup);
+
+            // Handle popup close event
+            newPopup.on('close', () => {
+              setCurrentPopup(null);
+            });
           }
         });
 
@@ -224,7 +240,7 @@ const MapboxMap: React.FC = () => {
         setDataLoading(false);
       }
     },
-    [geoJsonLoader]
+    [geoJsonLoader, currentPopup]
   );
 
   useEffect(() => {
