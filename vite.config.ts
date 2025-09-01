@@ -10,12 +10,25 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate React libraries
+          'react-vendor': ['react', 'react-dom'],
+          // Separate Mapbox (large library)
+          'mapbox-vendor': ['mapbox-gl'],
+          // Our app code
+          'app': ['./src/main.tsx']
+        },
+
+      }
+    }
   },
   define: {
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'mapbox-gl', 'react-map-gl']
+    include: ['react', 'react-dom', 'mapbox-gl']
   }
 })
