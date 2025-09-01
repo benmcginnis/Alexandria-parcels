@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { GeoJsonLoader } from '../utils/geoJsonLoader';
 
 // Alexandria bounding box coordinates
 const ALEXANDRIA_BOUNDS: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [
@@ -9,9 +10,130 @@ const ALEXANDRIA_BOUNDS: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [
 ];
 
 const MapboxMap: React.FC = () => {
-  const [, setMap] = useState<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [dataProgress, setDataProgress] = useState({
+    loadedBatches: 0,
+    totalBatches: 50,
+    loadedFeatures: 0,
+    currentBatch: 0,
+    isComplete: false,
+    errors: [] as string[],
+  });
+  const [geoJsonLoader] = useState(() => new GeoJsonLoader());
+
+  // Function to load GeoJSON data and add to map
+  const loadParcelData = useCallback(
+    async (mapInstance: mapboxgl.Map) => {
+      setDataLoading(true);
+      setDataProgress({
+        loadedBatches: 0,
+        totalBatches: 50,
+        loadedFeatures: 0,
+        currentBatch: 0,
+        isComplete: false,
+        errors: [],
+      });
+
+      try {
+        // Start loading data
+        const loadPromise = geoJsonLoader.loadAllBatches();
+
+        // Monitor progress
+        const progressInterval = setInterval(() => {
+          const progress = geoJsonLoader.getLoadingProgress();
+          setDataProgress(progress);
+        }, 100);
+
+        // Wait for data to load
+        const features = await loadPromise;
+        clearInterval(progressInterval);
+
+        // Create GeoJSON FeatureCollection
+        const geoJsonData = {
+          type: 'geojson' as const,
+          data: {
+            type: 'FeatureCollection' as const,
+            features: features as mapboxgl.GeoJSONFeature[],
+          },
+        };
+
+        // Add data source to map
+        if (mapInstance.getSource('parcels')) {
+          mapInstance.removeSource('parcels');
+        }
+        mapInstance.addSource('parcels', geoJsonData);
+
+        // Add parcel layer
+        if (mapInstance.getLayer('parcels-fill')) {
+          mapInstance.removeLayer('parcels-fill');
+        }
+        if (mapInstance.getLayer('parcels-stroke')) {
+          mapInstance.removeLayer('parcels-stroke');
+        }
+
+        // Add fill layer
+        mapInstance.addLayer({
+          id: 'parcels-fill',
+          type: 'fill',
+          source: 'parcels',
+          paint: {
+            'fill-color': '#3b82f6',
+            'fill-opacity': 0.3,
+          },
+        });
+
+        // Add stroke layer
+        mapInstance.addLayer({
+          id: 'parcels-stroke',
+          type: 'line',
+          source: 'parcels',
+          paint: {
+            'line-color': '#1e40af',
+            'line-width': 1,
+          },
+        });
+
+        // Add click handler for parcel interaction
+        mapInstance.on('click', 'parcels-fill', (e) => {
+          if (e.features && e.features.length > 0) {
+            const feature = e.features[0];
+            new mapboxgl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(
+                `
+              <div>
+                <h3>Parcel Information</h3>
+                <p><strong>ID:</strong> ${feature.properties?.id || 'N/A'}</p>
+                <p><strong>Area:</strong> ${feature.properties?.area ? feature.properties.area.toFixed(2) : 'N/A'} sq units</p>
+                <p><strong>Batch:</strong> ${feature.properties?.batch || 'N/A'}</p>
+              </div>
+            `
+              )
+              .addTo(mapInstance);
+          }
+        });
+
+        // Change cursor on hover
+        mapInstance.on('mouseenter', 'parcels-fill', () => {
+          mapInstance.getCanvas().style.cursor = 'pointer';
+        });
+
+        mapInstance.on('mouseleave', 'parcels-fill', () => {
+          mapInstance.getCanvas().style.cursor = '';
+        });
+
+        console.log(`Loaded ${features.length} parcel features`);
+      } catch (error) {
+        console.error('Error loading parcel data:', error);
+        setError(`Failed to load parcel data: ${error}`);
+      } finally {
+        setDataLoading(false);
+      }
+    },
+    [geoJsonLoader]
+  );
 
   useEffect(() => {
     // Get Mapbox access token from environment variable
@@ -50,6 +172,11 @@ const MapboxMap: React.FC = () => {
     newMap.on('load', () => {
       setLoading(false);
       console.log('Map loaded successfully');
+
+      // Start loading parcel data after map is ready
+      setTimeout(() => {
+        loadParcelData(newMap);
+      }, 500);
     });
 
     // Handle map errors
@@ -59,13 +186,11 @@ const MapboxMap: React.FC = () => {
       setLoading(false);
     });
 
-    setMap(newMap);
-
     // Cleanup on unmount
     return () => {
       newMap.remove();
     };
-  }, []);
+  }, [loadParcelData]);
 
   if (error) {
     return (
@@ -86,7 +211,7 @@ const MapboxMap: React.FC = () => {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {loading && (
+      {(loading || dataLoading) && (
         <div
           style={{
             position: 'absolute',
@@ -99,9 +224,53 @@ const MapboxMap: React.FC = () => {
             padding: '20px',
             borderRadius: '8px',
             fontSize: '18px',
+            minWidth: '300px',
+            textAlign: 'center',
           }}
         >
-          Loading Alexandria Parcels Map...
+          {loading ? (
+            'Loading Alexandria Parcels Map...'
+          ) : (
+            <div>
+              <div style={{ marginBottom: '10px' }}>Loading Parcel Data...</div>
+              <div style={{ marginBottom: '10px' }}>
+                Batch {dataProgress.currentBatch} of {dataProgress.totalBatches}
+              </div>
+              <div
+                style={{
+                  width: '100%',
+                  height: '20px',
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  marginBottom: '10px',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${(dataProgress.loadedBatches / dataProgress.totalBatches) * 100}%`,
+                    height: '100%',
+                    backgroundColor: '#3b82f6',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+              <div style={{ fontSize: '14px', opacity: 0.8 }}>
+                {dataProgress.loadedFeatures.toLocaleString()} features loaded
+              </div>
+              {dataProgress.errors.length > 0 && (
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: '#fca5a5',
+                    marginTop: '5px',
+                  }}
+                >
+                  {dataProgress.errors.length} errors
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       <div id="map" style={{ width: '100%', height: '100%' }} />
