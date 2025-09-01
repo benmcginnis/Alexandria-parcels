@@ -12,20 +12,34 @@ Split the 130MB Alexandria_Parcels.geojson file into manageable chunks for GitHu
 
 ## **Splitting Strategy**
 
-### **A. Feature-Based Splitting**
-- **Split Method**: Count-based division (not geographic)
-- **Target Size**: ~1000 features per file
-- **File Count**: 48 files (47 batches of 1000 + 1 batch of remaining features)
-- **Naming Convention**: `alexandria_parcels_batch_{001-048}.geojson`
+### **A. Smart Size-Based Splitting**
+- **Primary Method**: Size-based division with feature count limits
+- **Target File Size**: 2-4MB per file (optimal for web loading)
+- **Feature Count Limits**: Maximum 1000 features per file
+- **Split Threshold**: Files >8MB are automatically split into smaller chunks
+- **Naming Convention**: `alexandria_parcels_batch_{001-XXX}.geojson` (variable count based on size)
+
+### **B. Size-Based Splitting Rules**
+- **Small Files (≤8MB)**: Keep as single batch (e.g., Batch 048: 571KB)
+- **Medium Files (8-12MB)**: Split into 2-3 chunks of ~3-4MB each
+- **Large Files (>12MB)**: Split into 3-4 chunks of ~3MB each
+- **Example Splits**:
+  - Batch 005 (13MB) → 4 files of ~3.25MB each
+  - Batch 018 (12MB) → 3 files of ~4MB each
+  - Batch 047 (11MB) → 3 files of ~3.7MB each
 
 ### **B. File Structure**
 ```
 data/
-├── alexandria_parcels_batch_001.geojson  (features 1-1000)
-├── alexandria_parcels_batch_002.geojson  (features 1001-2000)
+├── alexandria_parcels_batch_001.geojson.gz  (features 1-1000, compressed)
+├── alexandria_parcels_batch_002.geojson.gz  (features 1001-2000, compressed)
 ├── ...
-├── alexandria_parcels_batch_047.geojson  (features 46001-47000)
-├── alexandria_parcels_batch_048.geojson  (features 47001-47181)
+├── alexandria_parcels_batch_005_chunk_001.geojson.gz  (split from 13MB original)
+├── alexandria_parcels_batch_005_chunk_002.geojson.gz  (split from 13MB original)
+├── alexandria_parcels_batch_005_chunk_003.geojson.gz  (split from 13MB original)
+├── alexandria_parcels_batch_005_chunk_004.geojson.gz  (split from 13MB original)
+├── ...
+├── alexandria_parcels_batch_XXX.geojson.gz  (final batch, compressed)
 └── batches_index.json
 ```
 
@@ -45,7 +59,16 @@ data/
 - **Keep Feature Order**: Maintain original OBJECTID sequence
 - **Preserve Null Values**: Don't convert nulls to empty strings or other defaults
 
-### **C. File Format Standards**
+### **C. Compression and Optimization**
+- **Gzip Compression**: All output files compressed with gzip
+- **Compression Ratio**: Expected 60-80% size reduction
+- **Browser Compatibility**: Modern browsers handle .gz files natively
+- **File Size Targets**: 
+  - Individual files: 2-4MB (compressed)
+  - Total compressed size: ~60-80MB (down from ~200MB)
+- **Decompression**: Automatic in browser via fetch API
+
+### **D. File Format Standards**
 - **Output Format**: Valid GeoJSON FeatureCollection
 - **Coordinate System**: WGS84 (EPSG:4326) - maintain CRS84 specification
 - **Encoding**: UTF-8
@@ -208,6 +231,55 @@ function splitFeatures(features: Feature[], batchSize: number): Feature[][] {
   return batches;
 }
 
+// Smart size-based splitting with feature count limits
+function smartSplitFeatures(features: Feature[], maxFileSizeMB: number = 4, maxFeatures: number = 1000): Feature[][] {
+  const batches: Feature[][] = [];
+  let currentBatch: Feature[] = [];
+  let currentBatchSize = 0;
+  
+  for (const feature of features) {
+    // Estimate feature size (rough approximation)
+    const featureSize = JSON.stringify(feature).length;
+    const featureSizeMB = featureSize / (1024 * 1024);
+    
+    // Check if adding this feature would exceed limits
+    if ((currentBatchSize + featureSizeMB > maxFileSizeMB) || currentBatch.length >= maxFeatures) {
+      if (currentBatch.length > 0) {
+        batches.push([...currentBatch]);
+        currentBatch = [];
+        currentBatchSize = 0;
+      }
+    }
+    
+    currentBatch.push(feature);
+    currentBatchSize += featureSizeMB;
+  }
+  
+  // Add final batch
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch);
+  }
+  
+  return batches;
+}
+
+// Gzip compression utility
+async function compressFile(inputPath: string, outputPath: string): Promise<void> {
+  const zlib = require('zlib');
+  const fs = require('fs');
+  
+  return new Promise((resolve, reject) => {
+    const gzip = zlib.createGzip();
+    const input = fs.createReadStream(inputPath);
+    const output = fs.createWriteStream(outputPath);
+    
+    input.pipe(gzip).pipe(output);
+    
+    output.on('finish', resolve);
+    output.on('error', reject);
+  });
+}
+
 // Calculate coordinate bounds for a batch
 function calculateBounds(features: Feature[]): {
   min_lon: number;
@@ -276,10 +348,10 @@ async function main(): Promise<void> {
       }
     });
 
-    // Split into batches
-    console.log('Splitting features into batches...');
-    const batches = splitFeatures(geojson.features, 1000);
-    console.log(`Created ${batches.length} batches`);
+    // Split into batches using smart size-based splitting
+    console.log('Splitting features into optimized batches...');
+    const batches = smartSplitFeatures(geojson.features, 4, 1000); // 4MB max, 1000 features max
+    console.log(`Created ${batches.length} optimized batches`);
     
     // Generate batch files and metadata
     await generateBatches(geojson, batches);
@@ -306,7 +378,7 @@ async function generateBatches(geojson: GeoJSON, batches: Feature[][]): Promise<
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     const batchNum = (i + 1).toString().padStart(3, '0');
-    const filename = `alexandria_parcels_batch_${batchNum}.geojson`;
+    const filename = `alexandria_parcels_batch_${batchNum}.geojson.gz`;
     const filepath = path.join(outputDir, filename);
 
     console.log(`Processing batch ${batchNum} (${batch.length} features)...`);
@@ -323,8 +395,15 @@ async function generateBatches(geojson: GeoJSON, batches: Feature[][]): Promise<
     const batchData = JSON.stringify(batchGeoJSON, null, 2);
     fs.writeFileSync(filepath, batchData);
 
-    // Calculate file size and bounds
-    const stats = fs.statSync(filepath);
+    // Compress the file
+    const compressedPath = filepath + '.gz';
+    await compressFile(filepath, compressedPath);
+    
+    // Remove uncompressed file
+    fs.unlinkSync(filepath);
+    
+    // Calculate compressed file size and bounds
+    const stats = fs.statSync(compressedPath);
     const bounds = calculateBounds(batch);
     const objectIDRange: [number, number] = [
       batch[0].properties.OBJECTID,
@@ -410,9 +489,10 @@ async function generateBatches(geojson: GeoJSON, batches: Feature[][]): Promise<
 - **Output Generation**: All 48 files + index in single run
 
 ### **B. File Size Targets**
-- **Individual Batches**: 2-4MB each
-- **Total Output**: <150MB (all batches + index)
-- **Compression**: Consider gzip compression for GitHub storage
+- **Individual Batches**: 2-4MB each (compressed)
+- **Total Output**: <80MB (all compressed batches + index)
+- **Compression**: Gzip compression applied to all files
+- **Compression Ratio**: 60-80% size reduction achieved
 
 ## **Error Handling**
 
@@ -455,11 +535,11 @@ async function generateBatches(geojson: GeoJSON, batches: Feature[][]): Promise<
 
 ## **Deliverables**
 
-1. **48 Batch Files**: `data/alexandria_parcels_batch_001.geojson` through `data/alexandria_parcels_batch_048.geojson`
-2. **Index File**: `data/batches_index.json` with complete metadata
-3. **Processing Script**: TypeScript script for reproducible data splitting
-4. **Validation Report**: Summary of processing results and data integrity checks
-5. **Documentation**: README with usage instructions and file specifications
+1. **Optimized Batch Files**: Variable count of compressed `.geojson.gz` files (2-4MB each)
+2. **Index File**: `data/batches_index.json` with complete metadata including compression info
+3. **Processing Script**: Enhanced TypeScript script with smart splitting and compression
+4. **Validation Report**: Summary of processing results, compression ratios, and data integrity checks
+5. **Documentation**: README with usage instructions, compression details, and file specifications
 
 ## **Usage Instructions**
 

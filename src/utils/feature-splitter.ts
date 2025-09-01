@@ -48,8 +48,8 @@ export class FeatureSplitter {
       // 4. Read and parse input file
       const inputData = await this.readInputFile();
       
-      // 5. Split features into batches
-      const batches = this.splitFeaturesIntoBatches(inputData.features);
+      // 5. Split features into batches using smart splitting
+      const batches = this.smartSplitFeatures(inputData.features, 4, 1000);
       
       // 6. Process each batch
       const batchResults = await this.processBatches(batches);
@@ -117,6 +117,40 @@ export class FeatureSplitter {
     for (let i = 0; i < features.length; i += this.config.batchSize) {
       const batch = features.slice(i, i + this.config.batchSize);
       batches.push(batch);
+    }
+    
+    return batches;
+  }
+
+  /**
+   * Smart splitting with both size and feature count constraints
+   */
+  private smartSplitFeatures(features: any[], maxFileSizeMB: number = 4, maxFeatures: number = 1000): any[][] {
+    const batches: any[][] = [];
+    let currentBatch: any[] = [];
+    let currentBatchSize = 0;
+    
+    for (const feature of features) {
+      // Estimate feature size (rough approximation)
+      const featureSize = JSON.stringify(feature).length;
+      const featureSizeMB = featureSize / (1024 * 1024);
+      
+      // Check if adding this feature would exceed limits
+      if ((currentBatchSize + featureSizeMB > maxFileSizeMB) || currentBatch.length >= maxFeatures) {
+        if (currentBatch.length > 0) {
+          batches.push([...currentBatch]);
+          currentBatch = [];
+          currentBatchSize = 0;
+        }
+      }
+      
+      currentBatch.push(feature);
+      currentBatchSize += featureSizeMB;
+    }
+    
+    // Add final batch
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
     }
     
     return batches;
