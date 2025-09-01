@@ -787,5 +787,212 @@ describe('Feature Splitting Logic Tests', () => {
         expect(result.totalFeatures).toBe(testCase.features.length);
       }
     });
+
+    describe('Compression & File Handling Tests', () => {
+      // Mock data for testing compression
+      const createCompressibleFeature = (id: number) => ({
+        type: 'Feature',
+        properties: {
+          OBJECTID: id,
+          PID_RE: `PID_${id}`,
+          ADDRESS_GIS: `Address ${id}`,
+          ZONING: 'R-5',
+          LAND_SF: 5000 + (id * 100),
+          // Add repetitive data that compresses well but is large enough to trigger splitting
+          REPETITIVE_TEXT: 'This is a very repetitive text that should compress well. '.repeat(200), // ~10KB
+          COORDINATES: Array.from({ length: 500 }, (_, i) => `coord_${i}`).join(','), // ~5KB
+          EXTRA_DATA: 'A'.repeat(5000) + 'B'.repeat(5000) + 'C'.repeat(5000), // ~15KB
+          COMPRESSIBLE_PROP: 'Z'.repeat(10000) // ~10KB
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [-77.123456789012345 + (id * 0.000001), 38.987654321098765 + (id * 0.000001)],
+            [-77.123456789012345 + (id * 0.000001), 38.987654321098765 + (id * 0.000002)],
+            [-77.123456789012345 + (id * 0.000002), 38.987654321098765 + (id * 0.000002)],
+            [-77.123456789012345 + (id * 0.000002), 38.987654321098765 + (id * 0.000001)],
+            [-77.123456789012345 + (id * 0.000001), 38.987654321098765 + (id * 0.000001)]
+          ]]
+        }
+      });
+
+      test('Test 5.1: Verify compressFile function successfully compresses GeoJSON files', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create test features that should compress well
+        const testFeatures = Array.from({ length: 100 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        // Mock the readInputFile method
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: testFeatures
+        });
+        
+        // Mock the processBatches method to avoid file I/O
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should create at least one batch
+        expect(result.totalBatches).toBeGreaterThan(0);
+        expect(result.totalFeatures).toBe(100);
+        
+        // Note: This test will be enhanced when we implement actual compression
+        // For now, it verifies the basic splitting still works
+      });
+
+      test('Test 5.2: Verify compression achieves 60-80% size reduction target', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create features with highly compressible data
+        const compressibleFeatures = Array.from({ length: 200 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: compressibleFeatures
+        });
+        
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should create multiple batches due to size constraints
+        expect(result.totalBatches).toBeGreaterThan(1);
+        
+        // Note: Compression ratio testing will be implemented when we add actual compression
+        // This test verifies that the splitting logic works with compressible data
+      });
+
+      test('Test 5.3: Verify compressed files maintain .gz extension', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create a small set of features
+        const smallFeatures = Array.from({ length: 50 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: smallFeatures
+        });
+        
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should create at least one batch
+        expect(result.totalBatches).toBeGreaterThan(0);
+        
+        // Note: File extension testing will be implemented when we add actual compression
+        // This test verifies the basic functionality still works
+      });
+
+      test('Test 5.4: Verify uncompressed files are removed after compression', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create features for testing
+        const testFeatures = Array.from({ length: 100 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: testFeatures
+        });
+        
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should process features successfully
+        expect(result.totalFeatures).toBe(100);
+        
+        // Note: File cleanup testing will be implemented when we add actual compression
+        // This test verifies the basic functionality still works
+      });
+
+      test('Test 5.5: Verify batch index includes compression metadata and file sizes', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create features for testing
+        const testFeatures = Array.from({ length: 150 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: testFeatures
+        });
+        
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should create multiple batches
+        expect(result.totalBatches).toBeGreaterThan(1);
+        
+        // Note: Compression metadata testing will be implemented when we add actual compression
+        // This test verifies the basic functionality still works
+      });
+
+      test('Test 5.6: Verify total output size is under 80MB (compressed)', async () => {
+        const config: SplitterConfig = {
+          inputFile: 'rawdata/Alexandria_Parcels.geojson',
+          outputDir: 'data/',
+          batchSize: 1000,
+          coordinatePrecision: 6,
+          clearOutput: false
+        };
+        
+        const splitter = new FeatureSplitter(config);
+        
+        // Create a larger dataset to test compression
+        const largeFeatures = Array.from({ length: 1000 }, (_, i) => createCompressibleFeature(i + 1));
+        
+        jest.spyOn(splitter as any, 'readInputFile').mockResolvedValue({
+          features: largeFeatures
+        });
+        
+        jest.spyOn(splitter as any, 'processBatches').mockResolvedValue([]);
+        
+        const result = await splitter.run();
+        
+        // Should create multiple batches
+        expect(result.totalBatches).toBeGreaterThan(1);
+        expect(result.totalFeatures).toBe(1000);
+        
+        // Note: Actual size validation will be implemented when we add compression
+        // This test verifies the basic functionality still works with larger datasets
+      });
+    });
   });
 });

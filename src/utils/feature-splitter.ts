@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as zlib from 'zlib';
 import { CoordinateProcessor } from './coordinate-processor';
 
 export interface SplitterConfig {
@@ -15,6 +16,8 @@ export interface BatchMetadata {
   featureCount: number;
   filename: string;
   objectIdRange: [number, number];
+  compressedSizeBytes?: number;
+  compressionRatio?: number;
 }
 
 export interface SplitterResult {
@@ -157,6 +160,22 @@ export class FeatureSplitter {
   }
 
   /**
+   * Compress a file using gzip
+   */
+  private async compressFile(inputPath: string, outputPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const gzip = zlib.createGzip();
+      const input = fs.createReadStream(inputPath);
+      const output = fs.createWriteStream(outputPath);
+      
+      input.pipe(gzip).pipe(output);
+      
+      output.on('finish', resolve);
+      output.on('error', reject);
+    });
+  }
+
+  /**
    * Process a single batch of features
    */
   processBatch(features: any[]): any[] {
@@ -187,12 +206,13 @@ export class FeatureSplitter {
       const batch = batches[i];
       const processedBatch = this.processBatch(batch);
       
-      // Generate filename
+      // Generate filename (will be compressed)
       const batchId = i + 1;
-      const filename = `alexandria_parcels_batch_${batchId.toString().padStart(3, '0')}.geojson`;
+      const baseFilename = `alexandria_parcels_batch_${batchId.toString().padStart(3, '0')}.geojson`;
+      const compressedFilename = `${baseFilename}.gz`;
       
-      // Write batch file
-      const outputPath = path.join(this.config.outputDir, filename);
+      // Write uncompressed batch file first
+      const uncompressedPath = path.join(this.config.outputDir, baseFilename);
       const batchGeoJSON = {
         type: 'FeatureCollection',
         name: `Alexandria_Parcels_Batch_${batchId}`,
@@ -200,15 +220,29 @@ export class FeatureSplitter {
         features: processedBatch
       };
       
-      fs.writeFileSync(outputPath, JSON.stringify(batchGeoJSON, null, 2));
+      fs.writeFileSync(uncompressedPath, JSON.stringify(batchGeoJSON, null, 2));
       
-      // Generate metadata
+      // Compress the file
+      const compressedPath = path.join(this.config.outputDir, compressedFilename);
+      await this.compressFile(uncompressedPath, compressedPath);
+      
+      // Remove uncompressed file
+      fs.unlinkSync(uncompressedPath);
+      
+      // Generate metadata with compression info
       const objectIds = processedBatch.map(f => f.properties.OBJECTID).sort((a, b) => a - b);
+      const compressedStats = fs.statSync(compressedPath);
+      const uncompressedSize = JSON.stringify(batchGeoJSON).length;
+      const compressedSize = compressedStats.size;
+      const compressionRatio = (uncompressedSize - compressedSize) / uncompressedSize;
+      
       const metadata: BatchMetadata = {
         batchId,
         featureCount: processedBatch.length,
-        filename,
-        objectIdRange: [objectIds[0], objectIds[objectIds.length - 1]]
+        filename: compressedFilename,
+        objectIdRange: [objectIds[0], objectIds[objectIds.length - 1]],
+        compressedSizeBytes: compressedSize,
+        compressionRatio: compressionRatio
       };
       
       results.push(metadata);

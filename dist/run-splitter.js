@@ -31,8 +31,18 @@ async function main() {
         console.log(`   Average Speed: ${(result.totalFeatures / processingTime).toFixed(0)} features/second`);
         console.log('\n📁 Generated Files:');
         result.batches.forEach(batch => {
-            console.log(`   ${batch.filename} (${batch.featureCount} features, OBJECTID ${batch.objectIdRange[0]}-${batch.objectIdRange[1]})`);
+            const compressionInfo = batch.compressionRatio ? 
+                `, ${(batch.compressionRatio * 100).toFixed(1)}% compressed` : '';
+            const sizeInfo = batch.compressedSizeBytes ? 
+                `, ${(batch.compressedSizeBytes / (1024 * 1024)).toFixed(2)}MB` : '';
+            console.log(`   ${batch.filename} (${batch.featureCount} features, OBJECTID ${batch.objectIdRange[0]}-${batch.objectIdRange[1]}${compressionInfo}${sizeInfo})`);
         });
+        
+        // Calculate total compressed size
+        const totalCompressedSize = result.batches.reduce((sum, batch) => 
+            sum + (batch.compressedSizeBytes || 0), 0);
+        const totalCompressedMB = totalCompressedSize / (1024 * 1024);
+        console.log(`\n💾 Total Compressed Size: ${totalCompressedMB.toFixed(2)}MB`);
         console.log(`\n📂 Output directory: ${config.outputDir}`);
         console.log('🎉 Ready for use in your React app!');
     }

@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FeatureSplitter = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const zlib = __importStar(require("zlib"));
 const coordinate_processor_1 = require("./coordinate-processor");
 class FeatureSplitter {
     constructor(config) {
@@ -47,8 +48,8 @@ class FeatureSplitter {
             await this.ensureOutputDirectory();
             // 4. Read and parse input file
             const inputData = await this.readInputFile();
-            // 5. Split features into batches
-            const batches = this.splitFeaturesIntoBatches(inputData.features);
+            // 5. Split features into batches using smart splitting
+            const batches = this.smartSplitFeatures(inputData.features, 4, 1000);
             // 6. Process each batch
             const batchResults = await this.processBatches(batches);
             const processingTime = Date.now() - startTime;
@@ -110,6 +111,47 @@ class FeatureSplitter {
         return batches;
     }
     /**
+     * Smart splitting with both size and feature count constraints
+     */
+    smartSplitFeatures(features, maxFileSizeMB = 4, maxFeatures = 1000) {
+        const batches = [];
+        let currentBatch = [];
+        let currentBatchSize = 0;
+        for (const feature of features) {
+            // Estimate feature size (rough approximation)
+            const featureSize = JSON.stringify(feature).length;
+            const featureSizeMB = featureSize / (1024 * 1024);
+            // Check if adding this feature would exceed limits
+            if ((currentBatchSize + featureSizeMB > maxFileSizeMB) || currentBatch.length >= maxFeatures) {
+                if (currentBatch.length > 0) {
+                    batches.push([...currentBatch]);
+                    currentBatch = [];
+                    currentBatchSize = 0;
+                }
+            }
+            currentBatch.push(feature);
+            currentBatchSize += featureSizeMB;
+        }
+        // Add final batch
+        if (currentBatch.length > 0) {
+            batches.push(currentBatch);
+        }
+        return batches;
+    }
+    /**
+     * Compress a file using gzip
+     */
+    async compressFile(inputPath, outputPath) {
+        return new Promise((resolve, reject) => {
+            const gzip = zlib.createGzip();
+            const input = fs.createReadStream(inputPath);
+            const output = fs.createWriteStream(outputPath);
+            input.pipe(gzip).pipe(output);
+            output.on('finish', resolve);
+            output.on('error', reject);
+        });
+    }
+    /**
      * Process a single batch of features
      */
     processBatch(features) {
@@ -136,25 +178,37 @@ class FeatureSplitter {
         for (let i = 0; i < batches.length; i++) {
             const batch = batches[i];
             const processedBatch = this.processBatch(batch);
-            // Generate filename
+            // Generate filename (will be compressed)
             const batchId = i + 1;
-            const filename = `alexandria_parcels_batch_${batchId.toString().padStart(3, '0')}.geojson`;
-            // Write batch file
-            const outputPath = path.join(this.config.outputDir, filename);
+            const baseFilename = `alexandria_parcels_batch_${batchId.toString().padStart(3, '0')}.geojson`;
+            const compressedFilename = `${baseFilename}.gz`;
+            // Write uncompressed batch file first
+            const uncompressedPath = path.join(this.config.outputDir, baseFilename);
             const batchGeoJSON = {
                 type: 'FeatureCollection',
                 name: `Alexandria_Parcels_Batch_${batchId}`,
                 crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:OGC:1.3:CRS84' } },
                 features: processedBatch
             };
-            fs.writeFileSync(outputPath, JSON.stringify(batchGeoJSON, null, 2));
-            // Generate metadata
+            fs.writeFileSync(uncompressedPath, JSON.stringify(batchGeoJSON, null, 2));
+            // Compress the file
+            const compressedPath = path.join(this.config.outputDir, compressedFilename);
+            await this.compressFile(uncompressedPath, compressedPath);
+            // Remove uncompressed file
+            fs.unlinkSync(uncompressedPath);
+            // Generate metadata with compression info
             const objectIds = processedBatch.map(f => f.properties.OBJECTID).sort((a, b) => a - b);
+            const compressedStats = fs.statSync(compressedPath);
+            const uncompressedSize = JSON.stringify(batchGeoJSON).length;
+            const compressedSize = compressedStats.size;
+            const compressionRatio = (uncompressedSize - compressedSize) / uncompressedSize;
             const metadata = {
                 batchId,
                 featureCount: processedBatch.length,
-                filename,
-                objectIdRange: [objectIds[0], objectIds[objectIds.length - 1]]
+                filename: compressedFilename,
+                objectIdRange: [objectIds[0], objectIds[objectIds.length - 1]],
+                compressedSizeBytes: compressedSize,
+                compressionRatio: compressionRatio
             };
             results.push(metadata);
         }
