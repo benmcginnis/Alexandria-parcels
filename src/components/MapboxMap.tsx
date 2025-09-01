@@ -99,15 +99,95 @@ const MapboxMap: React.FC = () => {
         mapInstance.on('click', 'parcels-fill', (e) => {
           if (e.features && e.features.length > 0) {
             const feature = e.features[0];
-            new mapboxgl.Popup()
+            const properties = feature.properties || {};
+
+            // Calculate area in different units
+            const areaSqUnits = properties.area || 0;
+            const areaAcres = areaSqUnits * 0.000247105 || 0; // Convert to acres
+            const areaSqFeet = areaSqUnits * 10.7639 || 0; // Convert to square feet
+
+            // Format coordinates
+            const geometry = feature.geometry as { coordinates: number[][][] };
+            const coordinates = geometry.coordinates?.[0] || [];
+            const centerLng =
+              coordinates.length > 0
+                ? coordinates.reduce(
+                    (sum: number, coord: number[]) => sum + coord[0],
+                    0
+                  ) / coordinates.length
+                : 0;
+            const centerLat =
+              coordinates.length > 0
+                ? coordinates.reduce(
+                    (sum: number, coord: number[]) => sum + coord[1],
+                    0
+                  ) / coordinates.length
+                : 0;
+
+            new mapboxgl.Popup({
+              closeButton: true,
+              closeOnClick: false,
+              maxWidth: '400px',
+              className: 'parcel-popup',
+            })
               .setLngLat(e.lngLat)
               .setHTML(
                 `
-              <div>
-                <h3>Parcel Information</h3>
-                <p><strong>ID:</strong> ${feature.properties?.id || 'N/A'}</p>
-                <p><strong>Area:</strong> ${feature.properties?.area ? feature.properties.area.toFixed(2) : 'N/A'} sq units</p>
-                <p><strong>Batch:</strong> ${feature.properties?.batch || 'N/A'}</p>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px;">
+                <div style="border-bottom: 2px solid #3b82f6; margin-bottom: 16px; padding-bottom: 8px;">
+                  <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 18px; font-weight: 600;">
+                    🏠 Alexandria Parcel
+                  </h3>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Parcel ID:</span>
+                    <span style="color: #6b7280; font-family: 'SF Mono', Monaco, monospace;">${properties.id || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Batch:</span>
+                    <span style="color: #6b7280;">${properties.batch || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151;">Coordinates:</span>
+                    <span style="color: #6b7280; font-size: 12px;">
+                      ${centerLat.toFixed(6)}, ${centerLng.toFixed(6)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div style="background: #f3f4f6; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                  <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px; font-weight: 600;">
+                    📏 Area Measurements
+                  </h4>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+                    <div>
+                      <span style="color: #6b7280;">Acres:</span>
+                      <span style="font-weight: 600; color: #374151; margin-left: 4px;">
+                        ${areaAcres.toFixed(3)}
+                      </span>
+                    </div>
+                    <div>
+                      <span style="color: #6b7280;">Sq Feet:</span>
+                      <span style="font-weight: 600; color: #374151; margin-left: 4px;">
+                        ${areaSqFeet.toFixed(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <span style="color: #6b7280;">Sq Units:</span>
+                      <span style="font-weight: 600; color: #374151; margin-left: 4px;">
+                        ${areaSqUnits.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style="font-size: 11px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 8px;">
+                  Click anywhere to close • Alexandria Parcels Dataset
+                </div>
               </div>
             `
               )

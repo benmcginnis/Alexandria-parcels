@@ -4,3 +4,27 @@
   overflow: hidden;
   position: relative;
 }
+
+/* Custom popup styles for parcel information */
+.parcel-popup .mapboxgl-popup-content {
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.parcel-popup .mapboxgl-popup-tip {
+  border-top-color: #e5e7eb;
+}
+
+.parcel-popup .mapboxgl-popup-close-button {
+  color: #6b7280;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.parcel-popup .mapboxgl-popup-close-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
