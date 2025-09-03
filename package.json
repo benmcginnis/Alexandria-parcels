@@ -24,7 +24,11 @@
     "prepare": "husky",
     "node:use": "nvm use",
     "node:install": "nvm install",
-    "node:check": "node --version && echo 'Expected: v24.x.x'"
+    "node:check": "node --version && echo 'Expected: v24.x.x'",
+    "node:validate": "node -e \"const v=process.version; if(!v.startsWith('v24')){console.error('❌ Wrong Node version:',v,'Expected v24.x.x'); process.exit(1);} console.log('✅ Node version OK:',v);\"",
+    "preinstall": "npm run node:validate",
+    "pretest": "npm run node:validate",
+    "prebuild": "npm run node:validate"
   },
   "dependencies": {
     "@types/react": "^19.1.12",
@@ -34,6 +38,7 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
