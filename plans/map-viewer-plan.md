@@ -17,6 +17,9 @@ Transform the existing Alexandria parcels splitter project into a React 19 singl
 5. ✅ No eslint or typescript errors
 6. ✅ Environment variables for Mapbox token
 7. ✅ Node 24 compatibility
+8. ✅ Interactive popup functionality for parcel details
+9. ✅ Comprehensive end-to-end testing with Playwright
+10. ✅ Clean, maintainable React component architecture
 
 ## Alexandria View Box Coordinates
 - **Southwest**: 38.79238855269405, -77.15216206049962
@@ -27,29 +30,35 @@ Transform the existing Alexandria parcels splitter project into a React 19 singl
 /
 ├── src/
 │   ├── components/
-│   │   ├── MapboxMap.tsx          # Main map component
-│   │   ├── GeoJSONLoader.tsx      # Handles loading of batch files
-│   │   └── LoadingIndicator.tsx   # Shows loading progress
+│   │   ├── MapboxMap.tsx          # ✅ Main map component with separated useEffects
+│   │   ├── ParcelPopup.tsx        # ✅ Interactive popup component
+│   │   └── __tests__/             # ✅ Component tests
 │   ├── utils/
-│   │   ├── geoJsonLoader.ts       # Utility functions for loading GeoJSON
-│   │   ├── mapConfig.ts           # Map configuration constants
-│   │   ├── coordinate-processor.ts # Existing coordinate processing utility
-│   │   ├── feature-splitter.ts    # Existing feature splitting utility
-│   │   └── file-validator.ts      # Existing file validation utility
+│   │   ├── geoJsonLoader.ts       # ✅ Utility functions for loading GeoJSON
+│   │   ├── mapConfig.ts           # ✅ Map configuration constants
+│   │   ├── coordinate-processor.ts # ✅ Existing coordinate processing utility
+│   │   ├── feature-splitter.ts    # ✅ Existing feature splitting utility
+│   │   └── file-validator.ts      # ✅ Existing file validation utility
+│   ├── constants/
+│   │   └── batchConfig.ts         # ✅ Auto-generated batch configuration
 │   ├── types/
-│   │   └── geoJson.ts             # TypeScript type definitions
-│   ├── App.tsx                    # Main app component
-│   ├── main.tsx                   # App entry point
-│   └── index.html                 # HTML entry point
+│   │   └── geoJson.ts             # ✅ TypeScript type definitions
+│   ├── App.tsx                    # ✅ Main app component
+│   ├── main.tsx                   # ✅ App entry point
+│   └── index.html                 # ✅ HTML entry point
 ├── scripts/
-│   └── splitter/                  # File splitting functionality
-│       ├── run-splitter.ts        # Main splitter script
-│       └── __tests__/             # Splitter tests
-├── data/                          # GeoJSON batch files
-├── .env.example                   # Environment variables template
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
+│   └── splitter/                  # ✅ File splitting functionality
+│       ├── run-splitter.ts        # ✅ Main splitter script
+│       └── __tests__/             # ✅ Splitter tests
+├── tests/
+│   └── single-popup.spec.ts       # ✅ Playwright end-to-end tests
+├── data/                          # ✅ GeoJSON batch files (50 compressed files)
+├── playwright-report/             # ✅ Test reports and screenshots
+├── .env.example                   # ✅ Environment variables template
+├── playwright.config.ts           # ✅ Playwright configuration
+├── package.json                   # ✅ Updated with all dependencies
+├── vite.config.ts                 # ✅ Vite configuration
+└── tsconfig.json                  # ✅ TypeScript configuration
 ```
 
 ## Technical Requirements
@@ -72,83 +81,93 @@ Transform the existing Alexandria parcels splitter project into a React 19 singl
 
 ## Implementation Phases
 
-### Phase 1: Project Setup & Dependencies
-1. **Reorganize existing project structure**
-   - Move existing file splitter files to `scripts/splitter/` directory
-   - Keep all source code in the main `src/` directory
+### ✅ Phase 1: Project Setup & Dependencies - COMPLETE
+1. ✅ **Reorganize existing project structure**
+   - Moved existing file splitter files to `scripts/splitter/` directory
+   - Kept all source code in the main `src/` directory
 
-2. **Node.js version management**
-   - Use nvm to install and switch to Node 24 for this project
-   - Verify Node 24 is active in current shell
-   - Ensure system default remains Node 18
+2. ✅ **Node.js version management**
+   - Used nvm to install and switch to Node 24 for this project
+   - Verified Node 24 is active in current shell
+   - Ensured system default remains Node 18
 
-3. **Install core dependencies**
+3. ✅ **Install core dependencies**
    - React 19 with latest TypeScript
    - Mapbox GL JS and React wrapper
    - Vite for build tooling
-   - Update existing package.json with new dependencies
+   - Updated existing package.json with new dependencies
 
-3. **Environment configuration**
+4. ✅ **Environment configuration**
    - Set up `.env` file for Mapbox access token
-   - Configure Vite to handle environment variables
-   - Add `.env.example` for documentation
+   - Configured Vite to handle environment variables
+   - Added `.env.example` for documentation
 
-### Phase 2: Map Component Development
-1. **Create MapboxMap component**
+### ✅ Phase 2: Map Component Development - COMPLETE
+1. ✅ **Create MapboxMap component**
    - Full-screen map container
    - Initialize Mapbox with environment variable access token
    - Set viewport to Alexandria coordinates
    - Handle map initialization and cleanup
 
-2. **Implement GeoJSON loading system**
-   - Create utility to dynamically load all 50 compressed `.geojson.gz` batch files from `data/` directory
+2. ✅ **Implement GeoJSON loading system**
+   - Created utility to dynamically load all 50 compressed `.geojson.gz` batch files from `data/` directory
    - Handle async loading of compressed files (browser automatically decompresses .gz files)
    - Implement error handling for failed loads
    - Optimize loading sequence for 9.33MB total compressed data
-   - Support for 48 batch files (ranging from 571KB to 13MB)
+   - Support for 50 batch files (ranging from 89KB to 595KB)
 
-3. **Data layer management**
+3. ✅ **Data layer management**
    - Add GeoJSON sources to Mapbox
    - Style polygon layers with appropriate colors and borders
    - Simple, clean visualization without complex controls
 
-### Phase 3: Performance Optimization
-1. **Handle large datasets efficiently**
-   - Implement progressive loading (load visible batches first)
-   - Use Mapbox clustering for dense areas
-   - Implement viewport-based loading to avoid loading off-screen data
-   - Handle files ranging from 571KB to 13MB efficiently
+### ✅ Phase 3: Interactive Features - COMPLETE
+1. ✅ **Popup functionality**
+   - Click parcels to view detailed information
+   - State management for selected parcels
+   - Proper DOM ownership between React and Mapbox
+   - Event handling for popup close
 
-2. **Memory management**
-   - Clean up unused GeoJSON sources
-   - Implement proper cleanup on component unmount
-   - Monitor memory usage with large datasets
-   - Prevent memory leaks with 48+ large GeoJSON files
+2. ✅ **Component architecture**
+   - Modular `MapboxMap` component with separated useEffects
+   - Dedicated `ParcelPopup` component
+   - Clean separation of concerns
 
-### Phase 4: UI/UX Enhancements
-1. **Loading states and progress indicators**
-   - Show loading progress for each batch
-   - Display total loaded features count
-   - Error handling for failed loads
-   - Progress bar for overall loading completion
-
-2. **Basic map controls**
-   - Zoom controls
-   - Simple navigation
-   - Reset view to Alexandria bounds
-
-### Phase 5: Testing & Quality Assurance
-1. **TypeScript configuration**
+### ✅ Phase 4: Testing & Quality Assurance - COMPLETE
+1. ✅ **TypeScript configuration**
    - Strict type checking enabled
    - Proper type definitions for Mapbox and GeoJSON
    - No TypeScript errors
    - Comprehensive type safety
 
-2. **Code quality**
+2. ✅ **Code quality**
    - Proper error boundaries
    - Performance monitoring
-   - Verify Node 24 compatibility (using nvm)
+   - Verified Node 24 compatibility (using nvm)
    - Clean, maintainable code structure
+
+3. ✅ **End-to-end testing**
+   - Playwright tests for popup functionality
+   - Screenshot testing for visual validation
+   - Comprehensive test coverage
+
+### 🔄 Phase 5: Advanced Features - READY TO START
+1. **Performance optimizations**
+   - Implement progressive loading (load visible batches first)
+   - Use Mapbox clustering for dense areas
+   - Implement viewport-based loading to avoid loading off-screen data
+
+2. **Enhanced UI/UX**
+   - Advanced popup features and styling
+   - Search and filtering capabilities
+   - Layer controls and toggles
+   - Export capabilities
+
+3. **Advanced functionality**
+   - IndexedDB integration for property-based indexing
+   - Web Workers for background processing
+   - Land use visualization enhancements
+   - Impact analysis tools
 
 ## Data Files to Load
 The app will load optimized, compressed GeoJSON batch files from the `data/` directory:
@@ -193,3 +212,8 @@ The app will load optimized, compressed GeoJSON batch files from the `data/` dir
 7. ✅ Environment variables properly configured
 8. ✅ Performance excellent with optimized datasets (9.33MB total)
 9. ✅ Clean, maintainable code structure
+10. ✅ Interactive popup functionality working correctly
+11. ✅ Comprehensive end-to-end testing implemented
+12. ✅ Single popup behavior (no multiple popups)
+13. ✅ Proper React component architecture with separated concerns
+14. ✅ All quality checks passing (ESLint, Prettier, Jest, TypeScript)

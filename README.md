@@ -1,6 +1,13 @@
-# Alexandria Parcels File Splitter
+# Alexandria Parcels 
 
 A TypeScript application to split large GeoJSON files into manageable batches for GitHub storage and efficient client-side processing.
+
+The data is sourced from [Alexandria's Open Data Porta] (https://cityofalexandria-alexgis.opendata.arcgis.com/datasets/ab8f3a147ddc47deb6d82c5afda65708_0)
+
+# Primarily used to test out developing software with Cursor
+
+See .specstory/ directory for chat history which contains a history of chats with cursor
+following an iterative development approach.
 
 ## Project Structure
 
