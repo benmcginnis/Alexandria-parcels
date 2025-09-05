@@ -150,6 +150,103 @@ private async compressFile(filePath: string): Promise<string>
 
 ---
 
+## **🎯 PHASE 3: CLOUDFLARE MIGRATION (January 15, 2025)**
+
+### **📋 Phase 3 Overview**
+Migrate the existing Alexandria Parcels React + Mapbox application to Cloudflare Pages + Workers while maintaining identical user experience and functionality.
+
+### **🎯 Phase 3 Goals**
+1. Deploy React app to Cloudflare Pages
+2. Serve GeoJSON data via Cloudflare Workers + R2
+3. Implement GitHub Actions for automated deployment
+4. Deploy to alexandriaparcels.benmcginnis.net
+5. Implement cache-bypass functionality
+6. Add comprehensive Playwright testing
+
+### **📊 Phase 3 Implementation Plan**
+
+#### **Phase 3.1: Project Setup & Template Migration**
+- Install Cloudflare Vite plugin and dependencies
+- Add worker directory structure to existing project
+- Update vite.config.ts with Cloudflare plugin
+- Create wrangler.toml configuration
+- Validate setup with Cloudflare CLI tools
+
+#### **Phase 3.2: Worker Implementation**
+- Implement core Cloudflare Worker for data serving
+- Add ETag generation and validation
+- Implement CORS headers and error handling
+- Create comprehensive worker tests
+- Validate worker functionality
+
+#### **Phase 3.3: Data Migration**
+- Set up R2 bucket for GeoJSON files
+- Upload all 50 batch files to R2
+- Update file splitter to generate TypeScript constants
+- Update data loading to use generated paths
+- Implement cache-bypass functionality
+
+#### **Phase 3.4: GitHub Actions Deployment**
+- Create automated deployment workflow
+- Configure Cloudflare secrets
+- Set up data upload automation
+- Deploy worker and pages automatically
+
+#### **Phase 3.5: R2 Data Validation**
+- Create validation script for R2 data
+- Verify all batch files uploaded correctly
+- Test worker endpoints
+- Validate data loading functionality
+
+#### **Phase 3.6: Testing & Validation**
+- Implement comprehensive Playwright tests
+- Test cached and fresh data scenarios
+- Validate UI functionality with Cloudflare data
+- Test cache-bypass parameter functionality
+- Performance testing and optimization
+
+#### **Phase 3.7: Production Deployment**
+- Configure Namecheap DNS for alexandriaparcels.benmcginnis.net
+- Set up Cloudflare SSL termination
+- Deploy to production domain
+- Validate production functionality
+
+### **🔧 Phase 3 Technical Implementation**
+
+#### **Cloudflare Architecture**
+```
+alexandriaparcels.benmcginnis.net/
+├── / (React app - Cloudflare Pages)
+├── /data/alexandria_parcels_batch_001.geojson.gz (Worker)
+├── /data/alexandria_parcels_batch_002.geojson.gz (Worker)
+└── ... (all data files handled by Worker)
+```
+
+#### **Key Features**
+- **ETag Caching**: Proper HTTP caching with ETag validation
+- **Cache-Bypass**: `?cache-bypass=true` parameter for fresh data
+- **Type Safety**: Generated TypeScript constants for file paths
+- **Automated Deployment**: GitHub Actions for CI/CD
+- **Comprehensive Testing**: Playwright tests for UI validation
+
+#### **Performance Benefits**
+- **Global CDN**: Data served from 200+ locations worldwide
+- **Edge Caching**: Cloudflare handles SSL termination and caching
+- **Optimized Loading**: 1-year cache headers for static data
+- **Faster Response**: Workers provide instant response times
+
+### **✅ Phase 3 Success Criteria**
+1. ✅ React app loads without errors on Cloudflare Pages
+2. ✅ All 50 batch files served from R2 via Workers
+3. ✅ 47,174 parcel polygons render correctly
+4. ✅ Popup functionality works identically
+5. ✅ Cache-bypass parameter functions correctly
+6. ✅ GitHub Actions deployment works
+7. ✅ Production domain accessible and functional
+8. ✅ Comprehensive test coverage with Playwright
+
+---
+
 ## **📈 Project Impact & Benefits**
 
 ### **Data Optimization Results**
@@ -187,7 +284,16 @@ private async compressFile(filePath: string): Promise<string>
 - Comprehensive testing with Playwright
 - Clean, maintainable code architecture
 
-**Phase 3 (Advanced Features)**: 🔄 **READY TO START**
+**Phase 3 (Cloudflare Migration)**: 🔄 **READY TO START**
+- Migrate React app to Cloudflare Pages
+- Implement Cloudflare Workers for data serving
+- Set up R2 storage for GeoJSON files
+- Configure GitHub Actions for automated deployment
+- Deploy to alexandriaparcels.benmcginnis.net
+- Implement cache-bypass functionality
+- Add comprehensive Playwright testing
+
+**Phase 4 (Advanced Features)**: 📋 **PLANNED**
 - Enhanced user interactions
 - Performance optimizations
 - Additional visualization features
@@ -198,9 +304,9 @@ private async compressFile(filePath: string): Promise<string>
 - All core requirements met and exceeded
 - Production-ready codebase
 - Comprehensive testing coverage
-- Ready for advanced feature development
+- Ready for Cloudflare migration and advanced features
 
 ---
 
-*Last Updated: September 2, 2025*
+*Last Updated: January 15, 2025*
 *Status: Phase 1 Complete, Phase 2 Complete, Phase 3 Ready*
