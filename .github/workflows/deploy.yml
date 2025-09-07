@@ -38,18 +38,29 @@ jobs:
           command: deploy
 
       - name: Upload data to R2
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.upload_data == 'true' || github.event_name == 'push'
         run: |
-          # Upload manifest if it exists
+          # Upload manifest if it exists and has changed
           if [ -f "data/manifest.json" ]; then
-            npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json
+            if git diff --quiet HEAD~1 HEAD -- data/manifest.json 2>/dev/null || [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              echo "Uploading manifest.json (changed or new)..."
+              npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json
+            else
+              echo "Skipping manifest.json (unchanged)"
+            fi
           fi
           
-          # Upload all batch files
+          # Upload only changed batch files using git diff
           for i in {1..50}; do
             batch_file="data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz"
             if [ -f "$batch_file" ]; then
-              echo "Uploading $batch_file..."
-              npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file"
+              # Check if file changed in this commit
+              if git diff --quiet HEAD~1 HEAD -- "$batch_file" 2>/dev/null || [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+                echo "Uploading $batch_file (changed or new)..."
+                npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file"
+              else
+                echo "Skipping $batch_file (unchanged)"
+              fi
             fi
           done
         env:
