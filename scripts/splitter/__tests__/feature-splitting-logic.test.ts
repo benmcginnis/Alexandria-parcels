@@ -102,7 +102,7 @@ describe('Feature Splitting Logic Tests', () => {
       expect(lastBatch.length).toBe(500);
       
       // Verify total features across all batches equals input
-      const totalFeaturesInBatches = batches.reduce((sum, batch) => sum + batch.length, 0);
+      const totalFeaturesInBatches = batches.reduce((sum: number, batch: any[]) => sum + batch.length, 0);
       expect(totalFeaturesInBatches).toBe(mockFeatures.length);
     });
 
@@ -350,7 +350,7 @@ describe('Feature Splitting Logic Tests', () => {
       }
       
       // Verify total features across all batches equals input
-      const totalFeaturesInBatches = batches.reduce((sum, batch) => sum + batch.length, 0);
+      const totalFeaturesInBatches = batches.reduce((sum: number, batch: any[]) => sum + batch.length, 0);
       expect(totalFeaturesInBatches).toBe(mockFeatures.length);
       
       // Verify first and last features in each batch

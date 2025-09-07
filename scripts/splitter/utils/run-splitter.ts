@@ -1,4 +1,4 @@
-import { FeatureSplitter, SplitterConfig } from './utils/feature-splitter';
+import { FeatureSplitter, SplitterConfig } from './feature-splitter';
 
 async function main() {
   console.log('🚀 Starting Alexandria Parcels Feature Splitting Process...\n');
@@ -37,7 +37,7 @@ async function main() {
     console.log(`   Average Speed: ${(result.totalFeatures / processingTime).toFixed(0)} features/second`);
     
     console.log('\n📁 Generated Files:');
-    result.batches.forEach(batch => {
+    result.batches.forEach((batch: any) => {
       console.log(`   ${batch.filename} (${batch.featureCount} features, OBJECTID ${batch.objectIdRange[0]}-${batch.objectIdRange[1]})`);
     });
     
