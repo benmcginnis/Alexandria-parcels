@@ -18,6 +18,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000, // Increase from 500KB to 1MB
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
