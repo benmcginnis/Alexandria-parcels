@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { cloudflare } from '@cloudflare/vite-plugin'
+import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    ...cloudflare({
+      // Cloudflare plugin configuration
+    })
+  ],
   server: {
     port: 3000,
     open: true
@@ -12,6 +19,10 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        worker: resolve(__dirname, 'src/worker/index.ts') // Include worker in build
+      },
       output: {
         manualChunks: {
           // Separate React libraries
@@ -21,7 +32,6 @@ export default defineConfig({
           // Our app code
           'app': ['./src/main.tsx']
         },
-
       }
     }
   },

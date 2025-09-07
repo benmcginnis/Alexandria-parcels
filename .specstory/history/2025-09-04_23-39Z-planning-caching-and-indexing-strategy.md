@@ -6538,3 +6538,294 @@ git add plans/cloudflare-migration-plan.md
 
 ---
 
+_**User (2025-09-04 23:41Z)**_
+
+ok lets commit our progress
+
+---
+
+_**Assistant**_
+
+I'll commit the updated Cloudflare migration plan with the improved phase ordering and validation steps.
+
+
+---
+
+```bash
+git add .
+```
+
+```
+bmcginnis@bmcginnis-mbp cursor-test % git add .
+bmcginnis@bmcginnis-mbp cursor-test %
+```
+
+---
+
+```bash
+git commit -m "feat: improve Cloudflare migration plan phase ordering
+
+- Reorder phases for better logical flow
+- Move R2 bucket setup and GitHub Actions to Phase 3.3
+- Move data loading updates to Phase 3.4
+- Distribute validation steps appropriately across phases
+- Add validation for infrastructure before code changes
+- Ensure each phase builds on previous working step
+
+Phase 3.3: R2 bucket + GitHub Actions + validation
+Phase 3.4: Data loading updates + R2 validation
+Phase 3.5: Comprehensive R2 data validation"
+```
+
+```
+<dation\nPhase 3.5: Comprehensive R2 data validation"
+🔍 Running pre-commit quality checks...
+
+> alexandria-parcels-map-viewer@1.0.0 pre-commit
+> npm run quality-check
+
+
+> alexandria-parcels-map-viewer@1.0.0 quality-check
+> ./scripts/quality-check.sh
+
+🔍 Running Quality Checks...
+📝 Running TypeScript type check...
+✅ TypeScript type check passed
+🧹 Running ESLint...
+
+/Users/bmcginnis/repo/cursor-test/src/components/ParcelPopup.tsx
+  15:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 1 problem (0 errors, 1 warning)
+
+✅ ESLint passed
+🎨 Checking code formatting...
+Checking formatting...
+All matched files use Prettier code style!
+✅ Code formatting is correct
+🧪 Running tests...
+
+> alexandria-parcels-map-viewer@1.0.0 pretest
+> npm run node:validate
+
+
+> alexandria-parcels-map-viewer@1.0.0 node:validate
+> node -e "const v=process.version; if(!v.startsWith('v24')){console.error('❌ Wrong Node version:',v,'Expec
+ted v24.x.x'); process.exit(1);} console.log('✅ Node version OK:',v);"
+
+✅ Node version OK: v24.7.0
+
+> alexandria-parcels-map-viewer@1.0.0 test
+> jest --passWithNoTests
+
+
+ RUNS  src/utils/__tests__/geoJsonLoader.test.ts
+```
+
+---
+
+_**User (2025-09-04 23:41Z)**_
+
+ok lets commit our progress with the commit message providing a very brief summary of the plan to setup cloudflare hosting
+
+---
+
+_**Assistant**_
+
+I'll commit with a brief summary of the Cloudflare hosting setup plan.
+
+
+---
+
+```bash
+git commit -m "feat: add Cloudflare migration plan
+
+- Plan migration to Cloudflare Workers + Pages + R2
+- 7 phases: setup, worker, data migration, GitHub Actions, validation, testing, production
+- Single subdomain hosting with ETag caching and cache-bypass
+- Automated deployment with data upload validation"
+```
+
+```
+
+🔍 Running pre-commit quality checks...
+
+> alexandria-parcels-map-viewer@1.0.0 pre-commit
+> npm run quality-check
+
+
+> alexandria-parcels-map-viewer@1.0.0 quality-check
+> ./scripts/quality-check.sh
+
+🔍 Running Quality Checks...
+📝 Running TypeScript type check...
+✅ TypeScript type check passed
+🧹 Running ESLint...
+
+/Users/bmcginnis/repo/cursor-test/src/components/ParcelPopup.tsx
+  15:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 1 problem (0 errors, 1 warning)
+
+✅ ESLint passed
+🎨 Checking code formatting...
+Checking formatting...
+All matched files use Prettier code style!
+✅ Code formatting is correct
+🧪 Running tests...
+
+> alexandria-parcels-map-viewer@1.0.0 pretest
+> npm run node:validate
+
+
+> alexandria-parcels-map-viewer@1.0.0 node:validate
+> node -e "const v=process.version; if(!v.startsWith('v24')){console.error('❌ Wrong Node version:',v,'Expect
+ed v24.x.x'); process.exit(1);} console.log('✅ Node version OK:',v);"                                     
+
+✅ Node version OK: v24.7.0
+
+> alexandria-parcels-map-viewer@1.0.0 test
+> jest --passWithNoTests
+
+ PASS  src/utils/__tests__/geoJsonLoader.test.ts (13.331 s)
+  GeoJsonLoader
+    Core Functionality
+      ✓ loads all batch files successfully using generated constants (1215 ms)
+      ✓ loads individual batch files successfully (14 ms)
+      ✓ handles missing batch files gracefully (1 ms)
+      ✓ processes compressed .gz files correctly (14 ms)
+      ✓ aggregates all features into single collection (3878 ms)
+      ✓ tracks loading progress accurately
+      ✓ handles corrupt or malformed data gracefully
+    Error Handling
+      ✓ continues loading when individual batches fail (1293 ms)
+      ✓ provides meaningful error messages (1 ms)
+      ✓ reports partial success for failed loads (1369 ms)
+      ✓ manages memory during large dataset loading (1344 ms)
+    Performance
+      ✓ loads all batches within reasonable time (1383 ms)
+      ✓ loading progress updates in real-time (1345 ms)
+      ✓ can handle concurrent loading requests (1256 ms)
+    Edge Cases
+      ✓ handles empty batch files (16 ms)
+      ✓ handles very large individual features (84 ms)
+      ✓ maintains feature order across batches (27 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        13.46 s
+Ran all test suites.
+✅ All tests passed
+🏗️  Checking build...
+
+> alexandria-parcels-map-viewer@1.0.0 build:vite
+> vite build
+
+vite v7.1.3 building for production...
+✓ 39 modules transformed.
+dist/index.html                            1.18 kB │ gzip:   0.59 kB
+dist/assets/app-DbjW9biE.css              37.83 kB │ gzip:   5.29 kB
+dist/assets/index-CyZIB5yl.js              0.85 kB │ gzip:   0.50 kB │ map:     0.10 kB
+dist/assets/react-vendor-gH-7aFTg.js      11.88 kB │ gzip:   4.24 kB │ map:    42.10 kB
+dist/assets/app-DCAg0l6i.js              185.45 kB │ gzip:  58.65 kB │ map:   870.47 kB
+dist/assets/mapbox-vendor-CnDx0VbA.js  1,605.13 kB │ gzip: 445.45 kB │ map: 3,336.68 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-option
+s/#output-manualchunks
+
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.58s
+✅ Build successful
+
+✅ All quality checks passed! 🎉
+Ready to commit.
+[main 652f03a] feat: add Cloudflare migration plan
+ 3 files changed, 7807 insertions(+), 3 deletions(-)
+ create mode 100644 .specstory/history/2025-09-04_23-39Z-planning-caching-and-indexing-strategy.md
+ create mode 100644 plans/cloudflare-migration-plan.md
+```
+
+---
+
+Perfect! The commit was successful. The Cloudflare migration plan has been committed with:
+
+✅ **Commit Summary:**
+- **3 files changed** with **7,807 insertions**
+- Created the comprehensive Cloudflare migration plan
+- All quality checks passed (TypeScript, ESLint, Prettier, tests, build)
+
+The plan is now ready for implementation, with the improved phase ordering:
+- **Phase 3.3:** R2 bucket setup + GitHub Actions + validation
+- **Phase 3.4:** Data loading updates + R2 validation  
+- **Phase 3.5:** Comprehensive R2 data validation
+
+The next step would be to begin implementing Phase 3.1 (Cloudflare Dependencies & Configuration) when you're ready!
+
+---
+
+_**User (2025-09-05 11:00Z)**_
+
+ok lets get started
+
+---
+
+_**Assistant**_
+
+Great! Let's start implementing Phase 3.1: Cloudflare Dependencies & Configuration. I'll begin by setting up the todo list and then implementing the first phase.
+
+
+---
+
+## Todo List
+
+- [-] Phase 3.1: Install Cloudflare dependencies (@cloudflare/vite-plugin, @cloudflare/workers-types, wrangler)
+- [ ] Phase 3.1: Update vite.config.ts with Cloudflare dev proxy and worker bundling
+- [ ] Phase 3.1: Create wrangler.toml configuration file
+- [ ] Phase 3.1: Validate configurations and build process
+- [ ] Phase 3.1: Git commit checkpoint
+
+---
+
+Now let's start with Phase 3.1.1: Installing the Cloudflare dependencies.
+
+
+---
+
+```bash
+npm install --save-dev @cloudflare/vite-plugin @cloudflare/workers-types wrangler
+```
+
+```
+bmcginnis@bmcginnis-mbp cursor-test % npm install --save-dev @cloudflare/vite-plugin @cloudflare/workers-typ
+es wrangler
+
+added 97 packages, and audited 791 packages in 14s
+
+186 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+bmcginnis@bmcginnis-mbp cursor-test %
+```
+
+---
+
+
+
+---
+
+_**User (2025-09-07 14:52Z)**_
+
+ok lets continue
+
+---
+
+_**Assistant**_
+
+
+
+---
+
