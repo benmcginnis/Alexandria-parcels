@@ -10,7 +10,7 @@ bucket_name = "alexandria-parcels-data"
 # KV namespace for storing metadata (ETags, manifest)
 [[kv_namespaces]]
 binding = "PARCEL_METADATA"
-id = "your-kv-namespace-id"
+id = "112fd7acc12a4324908bc25274e6934b"
 
 # Production environment configuration
 [env.production]
@@ -24,4 +24,4 @@ bucket_name = "alexandria-parcels-data"
 
 [[env.production.kv_namespaces]]
 binding = "PARCEL_METADATA"
-id = "your-kv-namespace-id"
+id = "112fd7acc12a4324908bc25274e6934b"

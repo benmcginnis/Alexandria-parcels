@@ -1,0 +1,64 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Worker and Pages
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build splitter
+        run: npm run build
+
+      - name: Build React app
+        run: npm run build:vite
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      - name: Upload data to R2
+        run: |
+          # Upload manifest if it exists
+          if [ -f "data/manifest.json" ]; then
+            npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json
+          fi
+          
+          # Upload all batch files
+          for i in {1..50}; do
+            batch_file="data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz"
+            if [ -f "$batch_file" ]; then
+              echo "Uploading $batch_file..."
+              npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file"
+            fi
+          done
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist/client --project-name alexandria-parcels
