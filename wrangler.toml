@@ -1,6 +1,7 @@
 name = "alexandria-parcels-api"
 main = "src/worker/index.ts"
 compatibility_date = "2024-01-15"
+workers_dev = true
 
 # R2 bucket for storing GeoJSON batch files
 [[r2_buckets]]
