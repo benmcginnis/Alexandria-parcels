@@ -1,4 +1,5 @@
 import { GeoJsonLoader } from '../geoJsonLoader';
+import * as pako from 'pako';
 
 // Mock fetch globally since we're in Node.js environment
 global.fetch = jest.fn();
@@ -8,16 +9,16 @@ jest.mock('../../constants/batchConfig', () => ({
   BATCH_COUNT: 50,
   BATCH_FILE_PREFIX: 'alexandria_parcels_batch_',
   BATCH_FILE_SUFFIX: '.geojson.gz',
-  DATA_DIRECTORY: 'data/',
+  DATA_DIRECTORY: '/data/',
   getBatchFilePath: jest.fn(
     (batchNumber: number) =>
-      `data/alexandria_parcels_batch_${String(batchNumber).padStart(3, '0')}.geojson.gz`
+      `/data/alexandria_parcels_batch_${String(batchNumber).padStart(3, '0')}.geojson.gz`
   ),
   getAllBatchFilePaths: jest.fn(() =>
     Array.from(
       { length: 50 },
       (_, i) =>
-        `data/alexandria_parcels_batch_${String(i + 1).padStart(3, '0')}.geojson.gz`
+        `/data/alexandria_parcels_batch_${String(i + 1).padStart(3, '0')}.geojson.gz`
     )
   ),
 }));
@@ -69,13 +70,14 @@ describe('GeoJsonLoader', () => {
         // Add a small delay to simulate realistic loading time
         await new Promise((resolve) => setTimeout(resolve, 10));
 
+        // Convert GeoJSON to string, then gzip it
+        const jsonString = JSON.stringify(mockGeoJson);
+        const compressed = pako.gzip(jsonString);
+
         return Promise.resolve({
           ok: true,
-          headers: new Map([['content-length', String(featureCount * 100)]]),
-          arrayBuffer: () =>
-            Promise.resolve(
-              new TextEncoder().encode(JSON.stringify(mockGeoJson)).buffer
-            ),
+          headers: new Map([['content-length', String(compressed.length)]]),
+          arrayBuffer: () => Promise.resolve(compressed.buffer),
         } as unknown as Response);
       } else {
         // Mock failed response for non-existent batches
