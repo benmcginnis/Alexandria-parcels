@@ -9,6 +9,7 @@ import {
   BatchLoadResult,
   LoadingProgress,
 } from '../types/geoJson';
+import * as pako from 'pako';
 
 // Export the types for use in tests and other modules
 export type { BatchLoadResult, LoadingProgress } from '../types/geoJson';
@@ -87,7 +88,8 @@ export class GeoJsonLoader {
 
       // Decompress and parse the GeoJSON
       const arrayBuffer = await response.arrayBuffer();
-      const text = new TextDecoder().decode(arrayBuffer);
+      const decompressed = pako.inflate(new Uint8Array(arrayBuffer));
+      const text = new TextDecoder().decode(decompressed);
 
       // Parse GeoJSON
       const geoJson: FeatureCollection = JSON.parse(text);

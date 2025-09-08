@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// @ts-expect-error - Externalized Mapbox GL JS from esm.sh
+import mapboxgl from 'https://esm.sh/mapbox-gl@3.14.0';
 import { GeoJsonLoader } from '../utils/geoJsonLoader';
 import ParcelPopup from './ParcelPopup';
 
@@ -112,6 +112,16 @@ const MapboxMap: React.FC = () => {
         });
 
         console.log(`Loaded ${features.length} parcel features`);
+
+        // Add data attribute to map container for testing
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+          mapContainer.setAttribute('data-parcels-loaded', 'true');
+          mapContainer.setAttribute(
+            'data-parcel-count',
+            features.length.toString()
+          );
+        }
       } catch (error) {
         console.error('Error loading parcel data:', error);
         setError(`Failed to load parcel data: ${error}`);
@@ -153,6 +163,9 @@ const MapboxMap: React.FC = () => {
     // Store map reference
     mapRef.current = newMap;
 
+    // Expose map globally for testing
+    (window as unknown as { map: mapboxgl.Map }).map = newMap;
+
     // Add navigation controls
     newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
@@ -160,7 +173,7 @@ const MapboxMap: React.FC = () => {
     newMap.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
     // Handle map errors
-    newMap.on('error', (e) => {
+    newMap.on('error', (e: Error) => {
       console.error('Map error:', e);
       setError('Failed to load map');
       setLoading(false);

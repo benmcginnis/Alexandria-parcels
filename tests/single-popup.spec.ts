@@ -2,79 +2,77 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Single Popup Behavior', () => {
   test('should show only one popup at a time', async ({ page }) => {
-    // Enable console logging to see what's happening
-    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-    
     await page.goto('/');
-    console.log('Page loaded');
     
-    // Check if map container exists
-    const mapContainer = page.locator('#map');
-    await expect(mapContainer).toBeVisible({ timeout: 10000 });
-    console.log('Map container found');
+    // Wait for map to be ready
+    await page.waitForSelector('#map');
+    await page.waitForFunction(() => {
+      return document.querySelector('#map')?.classList.contains('mapboxgl-map');
+    });
     
-    // Wait for map to load and parcel data to be ready
-    // We'll wait for the loading text to disappear, which indicates both map and data are loaded
+    // Wait for parcel data to load (indicated by loading text disappearing)
     await page.waitForSelector('text=Loading Alexandria Parcels Map...', { state: 'detached', timeout: 60000 });
-    console.log('Map and parcel data loaded');
     
     // Wait a bit more for everything to be ready
     await page.waitForTimeout(3000);
     
-    // Take a screenshot for debugging
-    await page.screenshot({ path: 'playwright-report/debug-map-loaded.png' });
+    // Try clicking on the map in different areas until we get a popup
+    const mapContainer = page.locator('#map');
+    let popupFound = false;
     
-
-    // Click first location (try to click on a parcel)
-    console.log('Clicking first location...');
-    await mapContainer.click({ position: { x: 400, y: 300 } });
+    // Try clicking in different areas of the map
+    const clickPositions = [
+      { x: 0.5, y: 0.5 }, // center
+      { x: 0.3, y: 0.4 }, // left-center  
+      { x: 0.7, y: 0.6 }, // right-center
+      { x: 0.4, y: 0.3 }, // upper-left
+      { x: 0.6, y: 0.7 }, // lower-right
+    ];
     
-    // Wait for popup to appear
-    await page.waitForSelector('.mapboxgl-popup', { timeout: 10000 });
-    console.log('First popup appeared');
-    
-    // Wait a bit to ensure popup is fully rendered
-    await page.waitForTimeout(1000);
-    
-    // Count popups before taking screenshot
-    const firstPopups = page.locator('.mapboxgl-popup');
-    const firstPopupCount = await firstPopups.count();
-    console.log(`First popup count: ${firstPopupCount}`);
-    await expect(firstPopups).toHaveCount(1);
-    console.log('Verified one popup exists');
-    
-    // Take screenshot of first popup
-    await page.screenshot({ path: 'playwright-report/debug-first-popup.png' });
-    console.log('First screenshot taken');
-    
-    // Click second location (far enough away from the 500px wide popup)
-    console.log('Clicking second location...');
-    await mapContainer.click({ position: { x: 800, y: 600 } });
-    
-    // Wait for popup transition and check multiple times
-    for (let i = 0; i < 5; i++) {
-      await page.waitForTimeout(500);
-      const currentPopups = page.locator('.mapboxgl-popup');
-      const currentCount = await currentPopups.count();
-      console.log(`After second click, iteration ${i + 1}: ${currentCount} popups`);
+    for (const pos of clickPositions) {
+      const mapBounds = await mapContainer.boundingBox();
+      if (!mapBounds) continue;
       
-      if (currentCount > 1) {
-        console.log('❌ MULTIPLE POPUPS DETECTED!');
+      await mapContainer.click({ 
+        position: { 
+          x: mapBounds.width * pos.x, 
+          y: mapBounds.height * pos.y 
+        } 
+      });
+      
+      // Wait a moment for popup to appear
+      await page.waitForTimeout(1000);
+      
+      const popupCount = await page.locator('.mapboxgl-popup').count();
+      if (popupCount > 0) {
+        popupFound = true;
         break;
       }
     }
     
-    // Final count
-    const secondPopups = page.locator('.mapboxgl-popup');
-    const secondPopupCount = await secondPopups.count();
-    console.log(`Final popup count: ${secondPopupCount}`);
-    await expect(secondPopups).toHaveCount(1);
-    console.log('Verified still only one popup exists');
+    // If no popup found, the test should fail with a clear message
+    if (!popupFound) {
+      throw new Error('Could not trigger a popup by clicking on the map. This might indicate an issue with parcel data loading or map interaction.');
+    }
     
-    // Take screenshot of second popup
-    await page.screenshot({ path: 'playwright-report/debug-second-popup.png' });
-    console.log('Second screenshot taken');
+    // Verify only one popup exists
+    await expect(page.locator('.mapboxgl-popup')).toHaveCount(1);
     
-    console.log('Test completed successfully');
+    // Try clicking in a different area to test single popup behavior
+    const mapBounds = await mapContainer.boundingBox();
+    if (mapBounds) {
+      await mapContainer.click({ 
+        position: { 
+          x: mapBounds.width * 0.8, 
+          y: mapBounds.height * 0.2 
+        } 
+      });
+      
+      // Wait for popup transition
+      await page.waitForTimeout(1000);
+      
+      // Should still have exactly one popup
+      await expect(page.locator('.mapboxgl-popup')).toHaveCount(1);
+    }
   });
 });

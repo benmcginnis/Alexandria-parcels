@@ -18,18 +18,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    chunkSizeWarningLimit: 1000, // Increase from 500KB to 1MB
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
         worker: resolve(__dirname, 'src/worker/index.ts') // Include worker in build
       },
+      external: ['mapbox-gl'], // Externalize only Mapbox GL to load from esm.sh
       output: {
         manualChunks: {
           // Separate React libraries
           'react-vendor': ['react', 'react-dom'],
-          // Separate Mapbox (large library)
-          'mapbox-vendor': ['mapbox-gl'],
           // Our app code
           'app': ['./src/main.tsx']
         },
@@ -40,6 +38,6 @@ export default defineConfig({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'mapbox-gl']
+    include: ['react', 'react-dom'] // React bundled, Mapbox externalized
   }
 })

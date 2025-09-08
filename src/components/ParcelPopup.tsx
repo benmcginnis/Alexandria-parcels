@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
+// @ts-expect-error - Externalized Mapbox GL JS from esm.sh
+import mapboxgl from 'https://esm.sh/mapbox-gl@3.14.0';
 
 interface ParcelPopupProps {
   map: mapboxgl.Map;
@@ -12,6 +13,7 @@ const ParcelPopup: React.FC<ParcelPopupProps> = ({
   lngLat,
   properties,
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const popupRef = useRef<any>(null);
   const popupInstanceRef = useRef<mapboxgl.Popup | null>(null);
 
