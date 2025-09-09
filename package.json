@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc -p scripts/splitter/tsconfig.json",
     "build:vite": "vite build",
+    "build:worker": "npx esbuild src/worker/index.ts --bundle --format=esm --outfile=dist/worker/index.js --external:@cloudflare/workers-types",
     "start": "node dist/run-splitter.js",
     "split": "npm run build && npm start",
     "dev": "ts-node scripts/splitter/run-splitter.ts",
