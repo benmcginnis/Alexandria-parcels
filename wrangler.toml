@@ -1,31 +1,5 @@
-name = "alexandria-parcels-api"
-main = "dist/worker/index.js"
+name = "alexandria-parcels"
 compatibility_date = "2024-01-15"
-workers_dev = true
 
 # Pages configuration
 pages_build_output_dir = "dist/client"
-
-# R2 bucket for storing GeoJSON batch files
-[[r2_buckets]]
-binding = "PARCEL_DATA_BUCKET"
-bucket_name = "alexandria-parcels-data"
-
-# KV namespace for storing metadata (ETags, manifest)
-[[kv_namespaces]]
-binding = "PARCEL_METADATA"
-id = "112fd7acc12a4324908bc25274e6934b"
-
-# Production environment configuration
-[env.production]
-routes = [
-  { pattern = "alexandriaparcels.benmcginnis.net/data/*", zone_name = "benmcginnis.net" }
-]
-
-[[env.production.r2_buckets]]
-binding = "PARCEL_DATA_BUCKET"
-bucket_name = "alexandria-parcels-data"
-
-[[env.production.kv_namespaces]]
-binding = "PARCEL_METADATA"
-id = "112fd7acc12a4324908bc25274e6934b"
