@@ -38,6 +38,8 @@ jobs:
 
       - name: Build React app
         run: npm run build:vite
+        env:
+          VITE_API_BASE_URL: 'https://alexandria-parcels-api.mcginnisb.workers.dev/data'
 
       - name: Build Worker
         run: npm run build:worker
