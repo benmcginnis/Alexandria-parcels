@@ -87,7 +87,7 @@ jobs:
             # Determine if we should upload manifest
             if [ "$FORCE_UPLOAD" = "true" ] || [ "$GIT_DIFF_MANIFEST" = "true" ]; then
               echo "Uploading manifest.json..."
-              npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json
+              npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json --remote
             else
               echo "Skipping manifest.json (unchanged)"
             fi
@@ -111,7 +111,7 @@ jobs:
               # Determine if we should upload this batch file
               if [ "$FORCE_UPLOAD" = "true" ] || [ "$GIT_DIFF_BATCH" = "true" ]; then
                 echo "  Uploading $batch_file..."
-                npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file"
+                npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file" --remote
               else
                 echo "  Skipping $batch_file (unchanged)"
               fi
