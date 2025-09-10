@@ -73,28 +73,45 @@ export class GeoJsonLoader {
   ): Promise<BatchLoadResult> {
     const startTime = Date.now();
     const filePath = getBatchFilePath(batchNumber);
+    
+    console.log(`[GeoJsonLoader] Starting to load batch ${batchNumber} from ${filePath}`);
 
     try {
       // Fetch the compressed file
+      console.log(`[GeoJsonLoader] Fetching ${filePath}...`);
       const response = await fetch(filePath);
+      console.log(`[GeoJsonLoader] Response status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
+        console.error(`[GeoJsonLoader] HTTP error: ${response.status} ${response.statusText}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       // Get file size
       const contentLength = response.headers.get('content-length');
       const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
+      console.log(`[GeoJsonLoader] File size: ${fileSize} bytes`);
 
       // Decompress and parse the GeoJSON
+      console.log(`[GeoJsonLoader] Converting response to array buffer...`);
       const arrayBuffer = await response.arrayBuffer();
+      console.log(`[GeoJsonLoader] Array buffer size: ${arrayBuffer.byteLength} bytes`);
+      
+      console.log(`[GeoJsonLoader] Decompressing with pako...`);
       const decompressed = pako.inflate(new Uint8Array(arrayBuffer));
+      console.log(`[GeoJsonLoader] Decompressed size: ${decompressed.length} bytes`);
+      
+      console.log(`[GeoJsonLoader] Converting to text...`);
       const text = new TextDecoder().decode(decompressed);
+      console.log(`[GeoJsonLoader] Text length: ${text.length} characters`);
 
       // Parse GeoJSON
+      console.log(`[GeoJsonLoader] Parsing JSON...`);
       const geoJson: FeatureCollection = JSON.parse(text);
+      console.log(`[GeoJsonLoader] Parsed GeoJSON with ${geoJson.features?.length || 0} features`);
 
       if (!geoJson || !geoJson.features || !Array.isArray(geoJson.features)) {
+        console.error(`[GeoJsonLoader] Invalid GeoJSON structure:`, geoJson);
         throw new Error('Invalid GeoJSON structure');
       }
 
@@ -110,11 +127,21 @@ export class GeoJsonLoader {
         },
       };
 
+      console.log(`[GeoJsonLoader] Successfully loaded batch ${batchNumber} with ${geoJson.features.length} features in ${loadTime}ms`);
       return result;
     } catch (error) {
       const loadTime = Date.now() - startTime;
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+
+      console.error(`[GeoJsonLoader] Error loading batch ${batchNumber}:`, error);
+      console.error(`[GeoJsonLoader] Error details:`, {
+        batchNumber,
+        filePath,
+        errorMessage,
+        loadTime,
+        errorStack: error instanceof Error ? error.stack : 'No stack trace'
+      });
 
       const result: BatchLoadResult = {
         batchNumber,
@@ -138,7 +165,10 @@ export class GeoJsonLoader {
    * Load all batch files sequentially
    */
   async loadAllBatches(): Promise<Feature[]> {
+    console.log(`[GeoJsonLoader] Starting to load all ${BATCH_COUNT} batches`);
+    
     if (this.progress.isComplete) {
+      console.log(`[GeoJsonLoader] All batches already loaded, returning ${this.allFeatures.length} features`);
       return this.allFeatures;
     }
 
@@ -147,22 +177,29 @@ export class GeoJsonLoader {
 
     for (let i = 1; i <= BATCH_COUNT; i++) {
       try {
+        console.log(`[GeoJsonLoader] Loading batch ${i}/${BATCH_COUNT}`);
         this.progress.currentBatch = i;
         const batchResult = await this.loadBatchFile(i);
 
         if (batchResult.features.length > 0) {
           this.allFeatures.push(...batchResult.features);
+          console.log(`[GeoJsonLoader] Added ${batchResult.features.length} features from batch ${i}. Total features: ${this.allFeatures.length}`);
+        } else {
+          console.log(`[GeoJsonLoader] Batch ${i} had no features`);
         }
 
         // Small delay to prevent overwhelming the browser
         await new Promise((resolve) => setTimeout(resolve, 10));
       } catch (error) {
+        console.error(`[GeoJsonLoader] Error in loadAllBatches for batch ${i}:`, error);
         this.progress.errors.push(`Batch ${i}: ${error}`);
       }
     }
 
     this.progress.isComplete = true;
     this.progress.currentBatch = BATCH_COUNT;
+    
+    console.log(`[GeoJsonLoader] Completed loading all batches. Total features: ${this.allFeatures.length}, Errors: ${this.progress.errors.length}`);
 
     return this.allFeatures;
   }

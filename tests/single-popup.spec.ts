@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Single Popup Behavior', () => {
   test('should show only one popup at a time', async ({ page }) => {
+    // Capture console logs
+    page.on('console', msg => {
+      console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`);
+    });
+    
     await page.goto('/');
     
     // Wait for map to be ready

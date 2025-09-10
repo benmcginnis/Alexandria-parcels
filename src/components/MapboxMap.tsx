@@ -44,6 +44,7 @@ const MapboxMap: React.FC = () => {
       });
 
       try {
+        console.log('[MapboxMap] Starting to load parcel data...');
         // Start loading data
         const loadPromise = geoJsonLoader.loadAllBatches();
 
@@ -51,11 +52,14 @@ const MapboxMap: React.FC = () => {
         const progressInterval = setInterval(() => {
           const progress = geoJsonLoader.getLoadingProgress();
           setDataProgress(progress);
+          console.log('[MapboxMap] Loading progress:', progress);
         }, 100);
 
         // Wait for data to load
+        console.log('[MapboxMap] Waiting for data to load...');
         const features = await loadPromise;
         clearInterval(progressInterval);
+        console.log('[MapboxMap] Data loading completed. Features loaded:', features.length);
 
         // Create GeoJSON FeatureCollection
         const geoJsonData = {
@@ -123,9 +127,15 @@ const MapboxMap: React.FC = () => {
           );
         }
       } catch (error) {
-        console.error('Error loading parcel data:', error);
+        console.error('[MapboxMap] Error loading parcel data:', error);
+        console.error('[MapboxMap] Error details:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : 'No stack trace',
+          progress: geoJsonLoader.getLoadingProgress()
+        });
         setError(`Failed to load parcel data: ${error}`);
       } finally {
+        console.log('[MapboxMap] Data loading finished, setting loading to false');
         setDataLoading(false);
       }
     },
