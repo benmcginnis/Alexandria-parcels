@@ -49,8 +49,16 @@ jobs:
       - name: Upload data to R2
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.upload_data == 'true' || github.event_name == 'push'
         run: |
+          # Set up debug variables
+          EVENT_NAME="${{ github.event_name }}"
+          UPLOAD_DATA_INPUT="${{ github.event.inputs.upload_data }}"
+          
+          echo "=== DEBUG INFO ==="
+          echo "Event name: $EVENT_NAME"
+          echo "Upload data input: $UPLOAD_DATA_INPUT"
+          
           # Check if we should force upload (workflow_dispatch with upload_data=true)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.upload_data }}" = "true" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$UPLOAD_DATA_INPUT" = "true" ]; then
             echo "Force uploading all data files (upload_data=true)..."
             FORCE_UPLOAD=true
           else
@@ -58,9 +66,24 @@ jobs:
             FORCE_UPLOAD=false
           fi
           
+          echo "FORCE_UPLOAD: $FORCE_UPLOAD"
+          echo "=================="
+          
           # Upload manifest if it exists
           if [ -f "data/manifest.json" ]; then
-            if [ "$FORCE_UPLOAD" = "true" ] || git diff --quiet HEAD~1 HEAD -- data/manifest.json 2>/dev/null || [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo "Checking manifest.json..."
+            
+            # Check git diff for manifest
+            if git diff --quiet HEAD~1 HEAD -- data/manifest.json 2>/dev/null; then
+              echo "Manifest unchanged according to git diff"
+              GIT_DIFF_MANIFEST=false
+            else
+              echo "Manifest changed according to git diff"
+              GIT_DIFF_MANIFEST=true
+            fi
+            
+            # Determine if we should upload manifest
+            if [ "$FORCE_UPLOAD" = "true" ] || [ "$GIT_DIFF_MANIFEST" = "true" ]; then
               echo "Uploading manifest.json..."
               npx wrangler r2 object put alexandria-parcels-data/manifest.json --file data/manifest.json
             else
@@ -72,11 +95,23 @@ jobs:
           for i in {1..50}; do
             batch_file="data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz"
             if [ -f "$batch_file" ]; then
-              if [ "$FORCE_UPLOAD" = "true" ] || git diff --quiet HEAD~1 HEAD -- "$batch_file" 2>/dev/null || [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-                echo "Uploading $batch_file..."
+              echo "Checking $batch_file..."
+              
+              # Check git diff for this batch file
+              if git diff --quiet HEAD~1 HEAD -- "$batch_file" 2>/dev/null; then
+                echo "  $batch_file unchanged according to git diff"
+                GIT_DIFF_BATCH=false
+              else
+                echo "  $batch_file changed according to git diff"
+                GIT_DIFF_BATCH=true
+              fi
+              
+              # Determine if we should upload this batch file
+              if [ "$FORCE_UPLOAD" = "true" ] || [ "$GIT_DIFF_BATCH" = "true" ]; then
+                echo "  Uploading $batch_file..."
                 npx wrangler r2 object put "alexandria-parcels-data/alexandria_parcels_batch_$(printf "%03d" $i).geojson.gz" --file "$batch_file"
               else
-                echo "Skipping $batch_file (unchanged)"
+                echo "  Skipping $batch_file (unchanged)"
               fi
             else
               echo "Warning: $batch_file not found"
