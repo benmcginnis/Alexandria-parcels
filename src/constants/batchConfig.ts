@@ -4,7 +4,8 @@
 export const BATCH_COUNT = 50;
 export const BATCH_FILE_PREFIX = 'alexandria_parcels_batch_';
 export const BATCH_FILE_SUFFIX = '.geojson.gz';
-export const DATA_DIRECTORY = '/data/';
+export const DATA_DIRECTORY =
+  (import.meta.env.VITE_API_BASE_URL || '/data/').replace(/\/$/, '') + '/';
 
 // Helper function to generate batch file path
 export const getBatchFilePath = (batchNumber: number): string => {

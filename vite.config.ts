@@ -31,6 +31,7 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || '/data/'),
   },
   optimizeDeps: {
     include: ['react', 'react-dom'] // React bundled, Mapbox externalized
