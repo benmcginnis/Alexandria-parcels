@@ -3,6 +3,10 @@ main = "dist/worker/index.js"
 compatibility_date = "2024-01-15"
 workers_dev = true
 
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
 # R2 bucket for storing GeoJSON batch files
 [[r2_buckets]]
 binding = "PARCEL_DATA_BUCKET"

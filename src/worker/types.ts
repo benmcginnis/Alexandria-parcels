@@ -14,6 +14,7 @@ export interface Env {
     get: (key: string) => Promise<string | null>;
     put: (key: string, value: string) => Promise<void>;
   };
+  ENVIRONMENT?: string;
 }
 
 // Request/Response types for data endpoints
