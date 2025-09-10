@@ -92,11 +92,16 @@ async function handleDataRequest(
       ? 'no-cache, no-store, must-revalidate'
       : 'public, max-age=31536000'; // 1 year for static data
 
+    // Determine content type based on file extension
+    const contentType = fileName.endsWith('.gz')
+      ? 'application/gzip'
+      : 'application/geo+json';
+
     // Return the file with proper headers
     return new Response(object.body, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/geo+json',
+        'Content-Type': contentType,
         'Content-Encoding': 'gzip',
         ETag: etag,
         'Last-Modified': lastModified,

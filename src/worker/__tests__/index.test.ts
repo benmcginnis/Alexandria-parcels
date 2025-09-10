@@ -88,7 +88,7 @@ describe('Alexandria Parcels Worker', () => {
       const response = await worker.fetch(request, mockEnv);
 
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('application/geo+json');
+      expect(response.headers.get('Content-Type')).toBe('application/gzip');
       expect(response.headers.get('Content-Encoding')).toBe('gzip');
       expect(response.headers.get('ETag')).toBe('"test-etag-123"');
       expect(response.headers.get('Cache-Control')).toBe(
