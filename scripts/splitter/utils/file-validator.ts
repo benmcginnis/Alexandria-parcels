@@ -1,5 +1,32 @@
+/// <reference types="node" />
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Global declaration for process (fallback)
+declare const process: {
+  cwd(): string;
+};
+
+// Define interfaces for better type safety
+interface GeoJSONFeature {
+  type: 'Feature';
+  properties: Record<string, unknown>;
+  geometry: {
+    type: 'Polygon' | 'MultiPolygon';
+    coordinates: number[][][] | number[][][][];
+  };
+}
+
+interface GeoJSONFeatureCollection {
+  type: 'FeatureCollection';
+  features: GeoJSONFeature[];
+  crs?: {
+    type: string;
+    properties: {
+      name: string;
+    };
+  };
+}
 
 export class FileValidator {
   /**
@@ -7,12 +34,12 @@ export class FileValidator {
    * @param relativePath - Relative path from project root
    * @returns Parsed GeoJSON object or null if error
    */
-  private static readAndParseFile(relativePath: string): any | null {
+  private static readAndParseFile(relativePath: string): GeoJSONFeatureCollection | null {
     try {
       const absolutePath = path.resolve(process.cwd(), relativePath);
       const fileContent = fs.readFileSync(absolutePath, 'utf8');
       return JSON.parse(fileContent);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -22,7 +49,7 @@ export class FileValidator {
    * @param parsed - Parsed GeoJSON object
    * @returns true if features array exists and is valid
    */
-  private static hasValidFeaturesArray(parsed: any): boolean {
+  private static hasValidFeaturesArray(parsed: GeoJSONFeatureCollection): boolean {
     return Array.isArray(parsed.features);
   }
 
@@ -31,10 +58,10 @@ export class FileValidator {
    * @param feature - Feature object to validate
    * @returns true if feature has required structure
    */
-  private static hasValidFeatureStructure(feature: any): boolean {
+  private static hasValidFeatureStructure(feature: GeoJSONFeature): boolean {
     return feature.type === 'Feature' && 
            feature.properties && 
-           feature.geometry;
+           !!feature.geometry;
   }
 
   /**
@@ -67,7 +94,7 @@ export class FileValidator {
       const fileContent = fs.readFileSync(absolutePath, 'utf8');
       JSON.parse(fileContent);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -105,7 +132,7 @@ export class FileValidator {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -122,7 +149,7 @@ export class FileValidator {
       const parsed = JSON.parse(fileContent);
       
       return parsed.type === 'FeatureCollection';
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -139,7 +166,7 @@ export class FileValidator {
       const parsed = JSON.parse(fileContent);
       
       return Array.isArray(parsed.features);
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -159,7 +186,7 @@ export class FileValidator {
              parsed.crs.type === 'name' && 
              parsed.crs.properties && 
              parsed.crs.properties.name === 'urn:ogc:def:crs:OGC:1.3:CRS84';
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -179,12 +206,12 @@ export class FileValidator {
         return false;
       }
       
-      return parsed.features.every((feature: any) => 
+      return parsed.features.every((feature: GeoJSONFeature) => 
         feature.type === 'Feature' && 
         feature.properties && 
         feature.geometry
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -204,8 +231,8 @@ export class FileValidator {
         return false;
       }
       
-      return parsed.features.every((feature: any) => feature.type === 'Feature');
-    } catch (error) {
+      return parsed.features.every((feature: GeoJSONFeature) => feature.type === 'Feature');
+    } catch {
       return false;
     }
   }
@@ -225,11 +252,11 @@ export class FileValidator {
         return false;
       }
       
-      return parsed.features.every((feature: any) => 
+      return parsed.features.every((feature: GeoJSONFeature) => 
         feature.geometry && 
         (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -250,7 +277,7 @@ export class FileValidator {
       }
       
       return parsed.features.length;
-    } catch (error) {
+    } catch {
       return -1;
     }
   }
@@ -270,12 +297,12 @@ export class FileValidator {
         return false;
       }
       
-      return parsed.features.every((feature: any) => 
+      return parsed.features.every((feature: GeoJSONFeature) => 
         feature.properties && 
         typeof feature.properties === 'object' && 
         Object.keys(feature.properties).length > 0
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -297,11 +324,11 @@ export class FileValidator {
       
       const requiredKeys = ['OBJECTID', 'PID_RE', 'ADDRESS_GIS', 'ZONING', 'LAND_SF'];
       
-      return parsed.features.every((feature: any) => 
+      return parsed.features.every((feature: GeoJSONFeature) => 
         feature.properties && 
         requiredKeys.every(key => key in feature.properties)
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -318,7 +345,7 @@ export class FileValidator {
       const sizeInBytes = stats.size;
       const sizeInMB = sizeInBytes / (1024 * 1024);
       return Math.round(sizeInMB * 100) / 100; // Round to 2 decimal places
-    } catch (error) {
+    } catch {
       return -1;
     }
   }
@@ -363,7 +390,7 @@ export class FileValidator {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -414,7 +441,7 @@ export class FileValidator {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -470,7 +497,7 @@ export class FileValidator {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -503,7 +530,7 @@ export class FileValidator {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
