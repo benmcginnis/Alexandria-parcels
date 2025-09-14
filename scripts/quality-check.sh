@@ -64,7 +64,7 @@ fi
 
 # 5. Build check
 echo "🏗️  Checking build..."
-if npm run build:vite; then
+if npm run build:app; then
     print_status "Build successful"
 else
     print_error "Build failed"

@@ -11,10 +11,11 @@ export default defineConfig({
     baseURL: 'https://alexandria-parcels.pages.dev',
     trace: 'on-first-retry',
     video: 'on-first-retry',
-  },
-  env: {
-    VITE_MAPBOX_ACCESS_TOKEN: process.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.test',
-    VITE_API_BASE_URL: 'https://alexandria-parcels-api.mcginnisb.workers.dev/data',
+    // Set environment variables for tests
+    extraHTTPHeaders: {
+      'X-VITE-MAPBOX-ACCESS-TOKEN': process.env.VITE_MAPBOX_ACCESS_TOKEN || 'pk.test',
+      'X-VITE-API-BASE-URL': 'https://alexandria-parcels-api.mcginnisb.workers.dev/data',
+    },
   },
   projects: [
     {

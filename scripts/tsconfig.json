@@ -1,9 +1,5 @@
 {
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "types": ["node"],
-    "lib": ["ES2024"]
-  },
+  "extends": "../tsconfig.node.json",
   "include": [
     "**/*"
   ]

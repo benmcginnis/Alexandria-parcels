@@ -17,52 +17,8 @@ interface GeoJSONFeature {
   };
 }
 
-interface GeoJSONFeatureCollection {
-  type: 'FeatureCollection';
-  features: GeoJSONFeature[];
-  crs?: {
-    type: string;
-    properties: {
-      name: string;
-    };
-  };
-}
 
 export class FileValidator {
-  /**
-   * Helper method to read and parse a GeoJSON file
-   * @param relativePath - Relative path from project root
-   * @returns Parsed GeoJSON object or null if error
-   */
-  private static readAndParseFile(relativePath: string): GeoJSONFeatureCollection | null {
-    try {
-      const absolutePath = path.resolve(process.cwd(), relativePath);
-      const fileContent = fs.readFileSync(absolutePath, 'utf8');
-      return JSON.parse(fileContent);
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Helper method to validate that parsed data has features array
-   * @param parsed - Parsed GeoJSON object
-   * @returns true if features array exists and is valid
-   */
-  private static hasValidFeaturesArray(parsed: GeoJSONFeatureCollection): boolean {
-    return Array.isArray(parsed.features);
-  }
-
-  /**
-   * Helper method to safely check if a feature has required structure
-   * @param feature - Feature object to validate
-   * @returns true if feature has required structure
-   */
-  private static hasValidFeatureStructure(feature: GeoJSONFeature): boolean {
-    return feature.type === 'Feature' && 
-           feature.properties && 
-           !!feature.geometry;
-  }
 
   /**
    * Check if the input file exists at the specified path

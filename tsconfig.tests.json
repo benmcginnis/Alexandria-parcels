@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.browser.json",
+  "compilerOptions": {
+    "types": [
+      "vite/client",
+      "node",
+      "@types/jest",
+      "@playwright/test"
+    ],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "scripts/**/__tests__/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
